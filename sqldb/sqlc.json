@@ -1,0 +1,22 @@
+{
+  "version": 2,
+  "sql": [
+    {
+      "engine": "sqlite",
+      "queries": "sqlite_queries.sql",
+      "schema": "sqlite_schema.sql",
+      "gen": {
+        "go": {
+          "emit_prepared_queries": true,
+          "package": "sqldb",
+          "out": ".",
+          "rename": {
+            "uuid": "UUID",
+			"user_uuid": "UserUUID",
+			"event_uuid": "EventUUID",
+          }
+        }
+      }
+    }
+  ]
+}

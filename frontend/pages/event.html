@@ -1,0 +1,78 @@
+{{ template "head" . }}
+<title>Event - Fullyhacks Management System</title>
+
+{{ template "header" . }}
+
+<main id="event-page">
+  <header>
+    <h2><code>{{ .Event.UUID }}</code></h2>
+    <p class="description">{{ .Event.Description }}</p>
+  </header>
+
+  <a href="scan" role="button" title="Scan Attendee">
+    {{ template "materialIcon" "qr_code_scanner" }}
+    QR Scanner
+  </a>
+
+  <article class="attendees">
+    <h3>Attendees</h3>
+    <ul class="attendees-list">
+      {{ range .Attendees }}
+        <li>
+        </li>
+      {{ end }}
+
+      {{ range .Events }}
+        <li>
+          <a href="/events/{{ .ID }}" role="button">
+            <hgroup>
+              <h3><code>{{ .UUID }}</code></h3>
+              <p class="description">
+                {{ .Description }}
+              </p>
+            </hgroup>
+            <footer>
+              <span class="attendees">{{ .Attendees }} attendees</span>
+              <span class="timestamp">{{ template "relativeTimestamp" .CreatedAt }}</span>
+            </footer>
+          </a>
+        </li>
+      {{ else }}
+      <i class="placeholder">
+        No events yet. Create one by clicking the "New" button above.
+      </i>
+      {{ end }}
+    </ul>
+  </article>
+</main>
+
+<style>
+  .events header {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .events header h2 {
+    margin: 0;
+  }
+
+  .events header a[role="button"] {
+    line-height: 0;
+    padding: 0.5em;
+  }
+
+  .events-list,
+  .events-list li {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+
+  .events-list .placeholder {
+    display: flex;
+    justify-content: center;
+    margin-top: 1em;
+  }
+</style>

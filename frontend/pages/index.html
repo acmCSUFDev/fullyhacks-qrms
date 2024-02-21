@@ -1,0 +1,95 @@
+{{ template "head" . }}
+<title>Fullyhacks Management System</title>
+
+{{ template "header" . }}
+
+<main id="main-page">
+  <article class="events">
+    <header>
+      <h2>Events</h2>
+      <a href="/events/new/" role="button" title="Add Event">
+        {{ template "materialIcon" "add" }}
+      </a>
+    </header>
+
+    <ul class="events-list">
+      {{ range .Events }}
+        <li>
+          <a href="/events/{{ .UUID }}/" role="button">
+            <hgroup>
+              <h3><code>{{ .UUID }}</code></h3>
+              <p class="description">
+                {{ .Description }}
+              </p>
+            </hgroup>
+            <footer>
+              <span class="attendees">{{ .Attendees }} attendees</span>
+              <span class="timestamp">created {{ template "relativeTimestamp" .CreatedAt }}</span>
+            </footer>
+          </a>
+        </li>
+      {{ else }}
+      <i class="placeholder">
+        No events yet. Create one by clicking the "New" button above.
+      </i>
+      {{ end }}
+    </ul>
+  </article>
+</main>
+
+<style>
+  .events header {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .events header h2 {
+    margin: 0;
+  }
+
+  .events header a[role="button"] {
+    line-height: 0;
+    padding: 0.5em;
+  }
+
+  .events-list,
+  .events-list li {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+
+  .events-list .placeholder {
+    display: flex;
+    justify-content: center;
+    margin-top: 1em;
+  }
+
+  .events-list a[role="button"] {
+    width: 100%;
+    border: none;
+    text-align: left;
+    background: none;
+  }
+
+  .events-list a[role="button"]:hover {
+    background: var(--pico-muted-border-color);
+  }
+
+  .events-list code {
+    background: none;
+    padding: 0;
+  }
+
+  .events-list footer {
+    font-size: 0.9em;
+    opacity: 0.7;
+  }
+
+  .events-list footer span:not(:first-child)::before {
+    content: "•";
+    margin: 0 0.5em;
+  }
+</style>

@@ -1,0 +1,31 @@
+{{ template "head" . }}
+<title>New Event - Fullyhacks Management System</title>
+
+{{ template "header" . }}
+
+<main id="new-event-page">
+  <article class="events">
+    <h2>Create a New Event</h2>
+    
+    <blockquote>
+      <mark><b>Hey!</b></mark>
+      <b>Make sure that you're coordinating with the rest of the team before
+      creating a new event!</b> This will help us avoid any conflicts and ensure
+      that we're all aware of the events that we're managing.
+    </blockquote>
+
+    <form action="/events/new/" method="POST">
+      <label>
+        Description
+        <input type="text" name="description" required>
+      </label>
+      <button type="submit">Create</button>
+    </form>
+  </article>
+</main>
+
+<style>
+  .events blockquote {
+    border-color: var(--pico-primary);
+  }
+</style>

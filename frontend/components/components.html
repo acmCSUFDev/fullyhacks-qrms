@@ -1,0 +1,11 @@
+{{ define "relativeTimestamp" }}
+<time class="relative" datetime="{{ .Format rfc3339  }}">
+  at {{ .Format rfc822 }}
+</time>
+{{ end }}
+
+{{ define "materialIcon" }}
+<span class="material-symbols-outlined">
+  {{ . }}
+</span>
+{{ end }}
