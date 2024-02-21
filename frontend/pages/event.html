@@ -4,75 +4,150 @@
 {{ template "header" . }}
 
 <main id="event-page">
-  <header>
-    <h2><code>{{ .Event.UUID }}</code></h2>
-    <p class="description">{{ .Event.Description }}</p>
-  </header>
+  <article class="qr-scanner">
+    <header>
+      <hgroup>
+        <h2><code>{{ .UUID }}</code></h2>
+        <p class="description">{{ .Description }}</p>
+      </hgroup>
 
-  <a href="scan" role="button" title="Scan Attendee">
-    {{ template "materialIcon" "qr_code_scanner" }}
-    QR Scanner
-  </a>
+      <aside class="controls">
+        <a href="/events/{{ .UUID }}/attendees/" role="button">
+          {{ template "materialIcon" "people" }}
+          Attendees
+        </a>
+  
+        <a href="/events/{{ .UUID }}/merge/" role="button">
+          {{ template "materialIcon" "merge" }}
+          Merge Event
+        </a>
+      </aside>
+    </header>
+  
+    <h4>Scan QR Code</h4>
 
-  <article class="attendees">
-    <h3>Attendees</h3>
-    <ul class="attendees-list">
-      {{ range .Attendees }}
-        <li>
-        </li>
-      {{ end }}
-
-      {{ range .Events }}
-        <li>
-          <a href="/events/{{ .ID }}" role="button">
-            <hgroup>
-              <h3><code>{{ .UUID }}</code></h3>
-              <p class="description">
-                {{ .Description }}
-              </p>
-            </hgroup>
-            <footer>
-              <span class="attendees">{{ .Attendees }} attendees</span>
-              <span class="timestamp">{{ template "relativeTimestamp" .CreatedAt }}</span>
-            </footer>
-          </a>
-        </li>
-      {{ else }}
-      <i class="placeholder">
-        No events yet. Create one by clicking the "New" button above.
-      </i>
-      {{ end }}
-    </ul>
+    <video id="qr-video"></video>
+    <p id="qr-status">Initializing...</p>
   </article>
 </main>
 
 <style>
-  .events header {
-    display: flex;
-    flex-direction: row;
-    justify-content: space-between;
-    align-items: center;
+  html, body {
+    height: 100%;
   }
 
-  .events header h2 {
+  body {
+    display: flex;
+    flex-direction: column;
+  }
+
+  main {
+    flex: 1;
+
+    display: flex;
+    flex-direction: column;
+  }
+
+  header h2 {
     margin: 0;
   }
 
-  .events header a[role="button"] {
+  header code {
+    background: none;
+    color: var(--pico-color);
+    padding: 0;
+  }
+
+  header button,
+  header a[role="button"] {
     line-height: 0;
     padding: 0.5em;
   }
 
-  .events-list,
-  .events-list li {
-    list-style: none;
-    padding: 0;
-    margin: 0;
+  .controls {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 0.5em;
   }
 
-  .events-list .placeholder {
+  .scan-qr-button {
+    --pico-background-color: var(--pico-muted-color);
+    --pico-border-color: var(--pico-muted-color);
+  }
+
+  .qr-scanner {
+    flex: 1;
+
     display: flex;
-    justify-content: center;
-    margin-top: 1em;
+    flex-direction: column;
+  }
+
+  #qr-video {
+    flex: 1;
+
+    width: 100%;
+    height: auto;
+  }
+
+  #qr-status {
+    margin: 0;
+    margin-top: var(--pico-typography-spacing-vertical) 0;
+    text-align: center;
+  }
+
+  #qr-status.error {
+    color: var(--pico-primary);
+  }
+
+  .qr-scanner .scan-region-highlight-svg {
+    stroke: var(--pico-primary) !important;
+  }
+
+  .qr-scanner .code-outline-highlight {
+    stroke: var(--pico-secondary) !important;
   }
 </style>
+
+<script type="module" async defer>
+  import QRScanner from "https://cdn.jsdelivr.net/npm/qr-scanner@1.4.2/qr-scanner.min.js";
+
+  const e = {
+    video: document.getElementById("qr-video"),
+    status: document.getElementById("qr-status"),
+  };
+
+  try {
+    const hasCamera = await QRScanner.hasCamera();
+    if (!hasCamera) {
+      throw new Error("No camera found.");
+    }
+  
+    let statusTimeout;
+    function onQRScanned(result) {
+      console.log("QR scanned", result);
+      e.status.textContent = `Scanned: ${result}`;
+  
+      if (statusTimeout) {
+        clearTimeout(statusTimeout);
+        statusTimeout = null;
+      }
+  
+      statusTimeout = setTimeout(() => {
+        e.status.textContent = "Scanning...";
+      }, 2000);
+    }
+  
+    const scanner = new QRScanner(e.video, onQRScanned, {
+      highlightScanRegion: true,
+      highlightCodeOutline: true,
+    });
+  
+    scanner.start();
+    e.status.textContent = "Scanning...";
+  } catch(err) {
+    alert("Error initializing QR scanner!");
+    e.status.textContent = `Error: ${err.message}`;
+    e.status.classList.add("error");
+  }
+</script>

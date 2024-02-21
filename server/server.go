@@ -8,12 +8,13 @@ import (
 
 	"dev.acmcsuf.com/fullyhacks-qrms/frontend"
 	"dev.acmcsuf.com/fullyhacks-qrms/sqldb"
+	"github.com/go-chi/chi/v5"
 	"libdb.so/tmplutil"
 )
 
 // Handler is the type for handling API requests.
 type Handler struct {
-	mux    *http.ServeMux
+	mux    *chi.Mux
 	db     *sqldb.Database
 	tmpl   *tmplutil.Templater
 	logger *slog.Logger
@@ -22,7 +23,7 @@ type Handler struct {
 // NewHandler creates a new Handler.
 func NewHandler(db *sqldb.Database, logger *slog.Logger) *Handler {
 	h := &Handler{
-		mux:    http.NewServeMux(),
+		mux:    chi.NewMux(),
 		db:     db,
 		tmpl:   frontend.NewTemplater(),
 		logger: logger,
@@ -33,38 +34,35 @@ func NewHandler(db *sqldb.Database, logger *slog.Logger) *Handler {
 	}
 
 	m := h.mux
+	m.NotFound(func(w http.ResponseWriter, r *http.Request) {
+		h.renderErrorWithCode(w, 404, fmt.Errorf("page not found"))
+	})
 
-	m.HandleFunc("GET /{$}", h.getIndex)
+	m.Get("/", h.getIndex)
 
-	m.HandleFunc("GET /events/new/{$}", h.getNewEvent)
-	m.HandleFunc("POST /events/new/{$}", h.postNewEvent)
+	m.Route("/events", func(m chi.Router) {
+		m.Get("/new", h.getNewEvent)
+		m.Post("/new", h.postNewEvent)
 
-	m.HandleFunc("GET /events/{id}/{$}", h.getEvent)
-	m.HandleFunc("POST /events/{id}/scan/{$}", h.postScanEvent)
+		m.Route("/{id}", func(m chi.Router) {
+			m.Get("/", h.getEvent)
+			m.Get("/attendees", h.getEventAttendees)
 
-	m.HandleFunc("GET /events/{id}/attendees/{$}", h.getEventAttendees)
-	m.HandleFunc("POST /events/{id}/attendees/{$}", h.postEventAttendees)
+			m.Get("/scan", h.getScanEvent)
+			m.Post("/scan", h.postScanEvent)
 
-	m.HandleFunc("GET /events/{id}/merge/{$}", h.getMergeEvent)
-	m.HandleFunc("POST /events/{id}/merge/{$}", h.postMergeEvent)
+			m.Get("/merge", h.getMergeEvent)
+			m.Post("/merge", h.postMergeEvent)
+		})
+	})
 
-	m.Handle("GET /", frontend.StaticHandler())
+	m.Mount("/", frontend.StaticHandler())
 
 	return h
 }
 
 func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	handler, pattern := h.mux.Handler(r)
-	h.logger.Debug(
-		"Handling request",
-		"method", r.Method,
-		"path", r.URL.Path,
-		"pattern", pattern)
-	if pattern == "" {
-		h.renderErrorWithCode(w, 404, fmt.Errorf("page not found"))
-		return
-	}
-	handler.ServeHTTP(w, r)
+	h.mux.ServeHTTP(w, r)
 }
 
 func (h *Handler) renderErrorWithCode(w http.ResponseWriter, code int, err error) {
@@ -121,13 +119,8 @@ func (h *Handler) postNewEvent(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, "/events/"+uuid, http.StatusSeeOther)
 }
 
-type eventData struct {
-	Event     sqldb.Event
-	Attendees []sqldb.ListEventAttendeesRow
-}
-
 func (h *Handler) getEvent(w http.ResponseWriter, r *http.Request) {
-	id := r.PathValue("id")
+	id := chi.URLParam(r, "id")
 
 	slog.Debug(
 		"Getting event",
@@ -139,16 +132,7 @@ func (h *Handler) getEvent(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	attendees, err := h.db.ListEventAttendees(r.Context(), id)
-	if err != nil {
-		h.renderErrorWithCode(w, 500, fmt.Errorf("cannot get attendees: %w", err))
-		return
-	}
-
-	h.tmpl.Execute(w, "event", eventData{
-		Event:     event,
-		Attendees: attendees,
-	})
+	h.tmpl.Execute(w, "event", event)
 }
 
 func (h *Handler) getScanEvent(w http.ResponseWriter, r *http.Request) {
@@ -161,8 +145,6 @@ func (h *Handler) postScanEvent(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) getEventAttendees(w http.ResponseWriter, r *http.Request) {
 	h.tmpl.Execute(w, "event_attendees", nil)
 }
-
-func (h *Handler) postEventAttendees(w http.ResponseWriter, r *http.Request) {}
 
 func (h *Handler) getMergeEvent(w http.ResponseWriter, r *http.Request) {
 	h.tmpl.Execute(w, "event_merge", nil)
