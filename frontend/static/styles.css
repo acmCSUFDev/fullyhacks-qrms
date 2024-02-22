@@ -24,6 +24,18 @@ a[role="button"] .material-symbols-outlined {
   padding: 0;
 }
 
+button.destructive,
+a[role="button"].destructive {
+  --pico-background-color: var(--pico-del-color);
+  --pico-border-color: var(--pico-del-color);
+}
+
+button.destructive:hover,
+a[role="button"].destructive:hover {
+  --pico-background-color: var(--pico-form-element-invalid-active-border-color);
+  --pico-border-color: var(--pico-form-element-invalid-active-border-color);
+}
+
 ul.list-box,
 ul.list-box li {
   list-style: none;
@@ -48,10 +60,12 @@ ul.list-box li:last-child {
   border: none;
   text-align: left;
   background: none;
+  cursor: default;
 }
 
-.button-list a[role="button"]:hover {
+.button-list a[href][role="button"]:hover {
   background: var(--pico-muted-border-color);
+  cursor: pointer;
 }
 
 .button-container {
@@ -78,6 +92,7 @@ header > hgroup:only-child {
 #user-list .user .name,
 #user-list .user .email {
   margin: 0;
+  text-overflow: ellipsis;
 }
 
 #user-list .user .name {
@@ -90,17 +105,30 @@ header > hgroup:only-child {
   color: var(--pico-muted-color);
 }
 
-#user-list .user {
+#user-list .user:target a[role="button"] {
+  background-color: var(--pico-primary-focus);
+}
+
+#user-list .user .button-container button,
+#user-list .user .button-container a[role="button"] {
+  margin: 0;
+  padding: 0.35em;
+  font-size: 0.85em;
+  line-height: 1;
+}
+
+#user-list.button-list .user {
   display: flex;
   flex-direction: row;
   align-items: center;
   justify-content: space-between;
 }
 
-#user-list .user:target a[role="button"] {
-  background-color: var(--pico-primary-focus);
+#user-list.button-list .user > a[role="button"] {
+  flex: 1;
+  text-align: left;
 }
 
-#user-list .user .button-container > * {
-  padding: 0.5em;
+#user-list.button-list .user > .button-container {
+  margin-left: 1em;
 }

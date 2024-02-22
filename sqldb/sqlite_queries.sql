@@ -39,6 +39,13 @@ INSERT INTO event_attendees (event_uuid, user_code) VALUES (?, ?);
 -- name: MoveAttendees :exec
 UPDATE event_attendees SET event_uuid = ? WHERE event_uuid = ?;
 
+-- name: RemoveAttendee :one
+DELETE FROM event_attendees
+WHERE
+	event_uuid = ? AND
+	user_code = (SELECT code FROM users WHERE email = ?)
+RETURNING created_at;
+
 -- name: AddAuthToken :one
 INSERT INTO auth_tokens (token, parent_token) VALUES (?, ?) RETURNING created_at;
 

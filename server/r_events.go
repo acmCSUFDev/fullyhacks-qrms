@@ -124,6 +124,22 @@ func (h *Handler) addEventAttendee(ctx context.Context, r addEventAttendeeReques
 	}, nil
 }
 
+func (h *Handler) removeEventAttendee(w http.ResponseWriter, r *http.Request) {
+	id := r.PathValue("id")
+	email := r.PathValue("email")
+
+	_, err := h.db.RemoveAttendee(r.Context(), sqldb.RemoveAttendeeParams{
+		EventUUID: id,
+		Email:     email,
+	})
+	if err != nil {
+		h.renderErrorWithCode(w, 400, fmt.Errorf("cannot remove attendee: %w", err))
+		return
+	}
+
+	http.Redirect(w, r, "/events/"+id+"/attendees", http.StatusSeeOther)
+}
+
 func (h *Handler) getMergeEvent(w http.ResponseWriter, r *http.Request) {
 	h.tmpl.Execute(w, "event_merge", nil)
 }

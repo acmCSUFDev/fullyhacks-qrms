@@ -253,3 +253,23 @@ func (q *Queries) MoveAttendees(ctx context.Context, arg MoveAttendeesParams) er
 	_, err := q.exec(ctx, q.moveAttendeesStmt, moveAttendees, arg.EventUUID, arg.EventUUID_2)
 	return err
 }
+
+const removeAttendee = `-- name: RemoveAttendee :one
+DELETE FROM event_attendees
+WHERE
+	event_uuid = ? AND
+	user_code = (SELECT code FROM users WHERE email = ?)
+RETURNING created_at
+`
+
+type RemoveAttendeeParams struct {
+	EventUUID string
+	Email     string
+}
+
+func (q *Queries) RemoveAttendee(ctx context.Context, arg RemoveAttendeeParams) (time.Time, error) {
+	row := q.queryRow(ctx, q.removeAttendeeStmt, removeAttendee, arg.EventUUID, arg.Email)
+	var created_at time.Time
+	err := row.Scan(&created_at)
+	return created_at, err
+}

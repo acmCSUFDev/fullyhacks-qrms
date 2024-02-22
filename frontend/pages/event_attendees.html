@@ -24,10 +24,18 @@
     <ul id="user-list" class="list-box button-list">
       {{ range .Attendees }}
         <li class="user" id="{{ .Email }}">
-          <a href="/users/{{ .Email }}/qr.png" role="button" title="Show user's QR">
+          <a role="button">
             <h3 class="name">{{ .Name }}</h3>
             <p class="email">{{ .Email }}</p>
           </a>
+
+          <aside class="actions button-container">
+            <form action="./attendees/{{ .Email }}/delete" method="post">
+              <button type="submit" class="destructive" title="Remove attendance">
+                {{ template "materialIcon" "clear" }}
+              </button>
+            </form>
+          </aside>
         </li>
       {{ else }}
         <i class="placeholder">No users scanned.</i>
@@ -39,6 +47,10 @@
 <style>
   #user-list.button-list .name {
     margin-bottom: 0.25em;
+  }
+
+  .user .actions {
+    float: right;
   }
 </style>
 

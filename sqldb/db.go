@@ -60,6 +60,9 @@ func Prepare(ctx context.Context, db DBTX) (*Queries, error) {
 	if q.moveAttendeesStmt, err = db.PrepareContext(ctx, moveAttendees); err != nil {
 		return nil, fmt.Errorf("error preparing query MoveAttendees: %w", err)
 	}
+	if q.removeAttendeeStmt, err = db.PrepareContext(ctx, removeAttendee); err != nil {
+		return nil, fmt.Errorf("error preparing query RemoveAttendee: %w", err)
+	}
 	return &q, nil
 }
 
@@ -125,6 +128,11 @@ func (q *Queries) Close() error {
 			err = fmt.Errorf("error closing moveAttendeesStmt: %w", cerr)
 		}
 	}
+	if q.removeAttendeeStmt != nil {
+		if cerr := q.removeAttendeeStmt.Close(); cerr != nil {
+			err = fmt.Errorf("error closing removeAttendeeStmt: %w", cerr)
+		}
+	}
 	return err
 }
 
@@ -176,6 +184,7 @@ type Queries struct {
 	listEventsStmt         *sql.Stmt
 	listUsersStmt          *sql.Stmt
 	moveAttendeesStmt      *sql.Stmt
+	removeAttendeeStmt     *sql.Stmt
 }
 
 func (q *Queries) WithTx(tx *sql.Tx) *Queries {
@@ -194,5 +203,6 @@ func (q *Queries) WithTx(tx *sql.Tx) *Queries {
 		listEventsStmt:         q.listEventsStmt,
 		listUsersStmt:          q.listUsersStmt,
 		moveAttendeesStmt:      q.moveAttendeesStmt,
+		removeAttendeeStmt:     q.removeAttendeeStmt,
 	}
 }

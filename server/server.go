@@ -91,6 +91,7 @@ func NewHandler(args Args) *Handler {
 
 					m.Get("/attendees", h.getEventAttendees)
 					m.Post("/attendees", hrt.Wrap(h.addEventAttendee))
+					m.Post("/attendees/{email}/delete", h.removeEventAttendee)
 
 					m.Get("/merge", h.getMergeEvent)
 					m.Post("/merge", h.postMergeEvent)
