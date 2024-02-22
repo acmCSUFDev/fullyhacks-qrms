@@ -1,0 +1,134 @@
+{{ template "head" }}
+{{ template "title" "Users" }}
+
+<main id="user-list-page" class="container">
+  <article class="user-list">
+    <header>
+      <hgroup>
+        <h2>QR Codes</h2>
+        <p>List of users and their QR codes</p>
+      </hgroup>
+
+      <aside class="button-container">
+        <a href="/" role="button" title="Home" class="secondary">
+          {{ template "materialIcon" "home" }}
+        </a>
+
+        <a href="/users/qr_codes.zip" role="button" title="Export all QR codes">
+          {{ template "materialIcon" "qr_code" }}
+          Export all QR codes <code>.zip</code>
+        </a>
+  
+        <a href="/users/add" role="button" title="Add User">
+          {{ template "materialIcon" "add" }}
+          Add user
+        </a>
+      </aside>
+    </header>
+
+    <input type="search" id="search" placeholder="Search users" disabled />
+
+    <ul class="user-list list-box button-list">
+      {{ range .Users }}
+        <li class="user" id="{{ .UUID }}">
+          <a href="/users/{{ .UUID }}/qr.png" role="button" title="Show user's QR">
+            <h3 class="name">
+              {{ .Name }}
+              <sub class="uuid"><code>{{ shortUUID .UUID }}</code></sub>
+            </h3>
+            <p class="email">{{ .Email }}</p>
+          </a>
+        </li>
+      {{ else }}
+        <i class="placeholder">No users imported.</i>
+      {{ end }}
+    </ul>
+  </article>
+</main>
+
+<style>
+  article header a[role="button"] {
+    line-height: 0;
+    padding: 0.5em;
+  }
+
+  a[role="button"] code {
+    background-color: rgba(0, 0, 0, 0.25);
+    color: var(--pico-color);
+  }
+
+  .user-list.button-list .uuid {
+    float: right;
+  }
+
+  .user-list.button-list .name {
+    margin-bottom: 0.25em;
+  }
+
+  .user .name,
+  .user .email {
+    margin: 0;
+  }
+
+  .user .name {
+    font-size: 1em;
+  }
+
+  .user .email {
+    margin-bottom: 0.25em;
+  }
+
+  .user .uuid,
+  .user .email {
+    font-size: 0.8em;
+    color: var(--pico-muted-color);
+  }
+
+  .user {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .user:target a[role="button"] {
+    background-color: var(--pico-primary-focus);
+  }
+
+  .user .button-container > * {
+    padding: 0.5em;
+  }
+</style>
+
+<script type="module" async defer>
+  const search = document.getElementById('search');
+
+  function updateSearch() {
+    const query = search.value.toLowerCase();
+    const users = document.querySelectorAll('.user-list .user');
+
+    users.forEach(user => {
+      const name = user.querySelector('.name').textContent.toLowerCase();
+      const email = user.querySelector('.email').textContent.toLowerCase();
+
+      if (name.includes(query) || email.includes(query)) {
+        user.style.display = 'block';
+      } else {
+        user.style.display = 'none';
+      }
+    });
+  }
+
+  search.disabled = false;
+  search.addEventListener('input', updateSearch);
+
+  const hash = window.location.hash;
+  if (hash) {
+    const user = document.getElementById(hash.slice(1));
+    if (user) {
+      const email = user.querySelector('.email').textContent;
+      search.value = email;
+      updateSearch();
+    }
+  }
+</script>

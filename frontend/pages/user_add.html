@@ -1,0 +1,40 @@
+{{ template "head" }}
+{{ template "title" "Add User" }}
+
+{{ template "header" . }}
+
+<main id="add-user-page" class="container">
+  <article class="add-user">
+    <h2>Add User</h2>
+    
+    <blockquote>
+      <mark><b>Hey!</b></mark>
+      <b>Make sure that you're coordinating with the rest of the team before
+      creating a new event!</b> This will help us avoid any conflicts and ensure
+      that we're all aware of the events that we're managing.
+    </blockquote>
+
+    <form action="/users/add" method="POST">
+      <label>
+        Preferred Name
+        <input type="text" name="name" required>
+      </label>
+
+      <label>
+        Email
+        <input type="email" name="email" required>
+      </label>
+
+      <button type="submit">
+        {{ template "materialIcon" "add" }}
+        Add User
+      </button>
+    </form>
+  </article>
+</main>
+
+<style>
+  .events blockquote {
+    border-color: var(--pico-primary);
+  }
+</style>

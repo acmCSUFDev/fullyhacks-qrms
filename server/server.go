@@ -9,24 +9,33 @@ import (
 	"dev.acmcsuf.com/fullyhacks-qrms/frontend"
 	"dev.acmcsuf.com/fullyhacks-qrms/sqldb"
 	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/chi/v5/middleware"
 	"libdb.so/tmplutil"
 )
 
 // Handler is the type for handling API requests.
 type Handler struct {
-	mux    *chi.Mux
-	db     *sqldb.Database
-	tmpl   *tmplutil.Templater
-	logger *slog.Logger
+	mux       *chi.Mux
+	db        *sqldb.Database
+	tmpl      *tmplutil.Templater
+	logger    *slog.Logger
+	rootToken string
+}
+
+type Args struct {
+	Database  *sqldb.Database
+	Logger    *slog.Logger
+	RootToken string
 }
 
 // NewHandler creates a new Handler.
-func NewHandler(db *sqldb.Database, logger *slog.Logger) *Handler {
+func NewHandler(args Args) *Handler {
 	h := &Handler{
-		mux:    chi.NewMux(),
-		db:     db,
-		tmpl:   frontend.NewTemplater(),
-		logger: logger,
+		mux:       chi.NewMux(),
+		db:        args.Database,
+		tmpl:      frontend.NewTemplater(),
+		logger:    args.Logger,
+		rootToken: args.RootToken,
 	}
 
 	h.tmpl.OnRenderFail = func(sub *tmplutil.Subtemplate, w io.Writer, err error) {
@@ -34,25 +43,44 @@ func NewHandler(db *sqldb.Database, logger *slog.Logger) *Handler {
 	}
 
 	m := h.mux
+	m.Use(middleware.CleanPath)
 	m.NotFound(func(w http.ResponseWriter, r *http.Request) {
 		h.renderErrorWithCode(w, 404, fmt.Errorf("page not found"))
 	})
 
-	m.Get("/", h.getIndex)
+	m.With(h.useAuth).Get("/auth/{token}", h.getAuth)
 
-	m.Route("/events", func(m chi.Router) {
-		m.Get("/new", h.getNewEvent)
-		m.Post("/new", h.postNewEvent)
+	m.Group(func(m chi.Router) {
+		m.Use(h.useAuth)
+		m.Use(h.requireAuth)
 
-		m.Route("/{id}", func(m chi.Router) {
-			m.Get("/", h.getEvent)
-			m.Get("/attendees", h.getEventAttendees)
+		m.Get("/", h.getIndex)
 
-			m.Get("/scan", h.getScanEvent)
-			m.Post("/scan", h.postScanEvent)
+		m.Route("/users", func(m chi.Router) {
+			m.Get("/", h.listUsersPage)
+			m.Get("/{uuid}/qr.png", h.getUserQRAsPNG)
 
-			m.Get("/merge", h.getMergeEvent)
-			m.Post("/merge", h.postMergeEvent)
+			m.Get("/add", h.addUserPage)
+			m.Post("/add", h.addUser)
+
+			// This endpoint is super heavy, so we throttle it really hard.
+			m.With(middleware.Throttle(1)).Get("/qr_codes.zip", h.getAllUserQRs)
+		})
+
+		m.Route("/events", func(m chi.Router) {
+			m.Get("/new", h.getNewEvent)
+			m.Post("/new", h.postNewEvent)
+
+			m.Route("/{id}", func(m chi.Router) {
+				m.Get("/", h.getEvent)
+				m.Get("/attendees", h.getEventAttendees)
+
+				m.Get("/scan", h.getScanEvent)
+				m.Post("/scan", h.postScanEvent)
+
+				m.Get("/merge", h.getMergeEvent)
+				m.Post("/merge", h.postMergeEvent)
+			})
 		})
 	})
 
@@ -94,60 +122,3 @@ func (h *Handler) getIndex(w http.ResponseWriter, r *http.Request) {
 		Events: events,
 	})
 }
-
-func (h *Handler) getNewEvent(w http.ResponseWriter, r *http.Request) {
-	h.tmpl.Execute(w, "event_new", nil)
-}
-
-func (h *Handler) postNewEvent(w http.ResponseWriter, r *http.Request) {
-	description := r.FormValue("description")
-	if description == "" {
-		h.renderErrorWithCode(w, 400, fmt.Errorf("description cannot be empty"))
-		return
-	}
-
-	uuid := sqldb.GenerateUUID()
-
-	if err := h.db.CreateEvent(r.Context(), sqldb.CreateEventParams{
-		UUID:        uuid,
-		Description: description,
-	}); err != nil {
-		h.renderErrorWithCode(w, 500, fmt.Errorf("cannot create event: %w", err))
-		return
-	}
-
-	http.Redirect(w, r, "/events/"+uuid, http.StatusSeeOther)
-}
-
-func (h *Handler) getEvent(w http.ResponseWriter, r *http.Request) {
-	id := chi.URLParam(r, "id")
-
-	slog.Debug(
-		"Getting event",
-		"id", id)
-
-	event, err := h.db.GetEvent(r.Context(), id)
-	if err != nil {
-		h.renderErrorWithCode(w, 500, fmt.Errorf("cannot get event: %w", err))
-		return
-	}
-
-	h.tmpl.Execute(w, "event", event)
-}
-
-func (h *Handler) getScanEvent(w http.ResponseWriter, r *http.Request) {
-	h.tmpl.Execute(w, "scan", nil)
-}
-
-func (h *Handler) postScanEvent(w http.ResponseWriter, r *http.Request) {
-}
-
-func (h *Handler) getEventAttendees(w http.ResponseWriter, r *http.Request) {
-	h.tmpl.Execute(w, "event_attendees", nil)
-}
-
-func (h *Handler) getMergeEvent(w http.ResponseWriter, r *http.Request) {
-	h.tmpl.Execute(w, "event_merge", nil)
-}
-
-func (h *Handler) postMergeEvent(w http.ResponseWriter, r *http.Request) {}

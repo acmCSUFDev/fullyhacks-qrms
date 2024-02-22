@@ -24,6 +24,22 @@ func (q *Queries) AddAttendee(ctx context.Context, arg AddAttendeeParams) error 
 	return err
 }
 
+const addAuthToken = `-- name: AddAuthToken :one
+INSERT INTO auth_tokens (token, parent_token) VALUES (?, ?) RETURNING created_at
+`
+
+type AddAuthTokenParams struct {
+	Token       string
+	ParentToken string
+}
+
+func (q *Queries) AddAuthToken(ctx context.Context, arg AddAuthTokenParams) (time.Time, error) {
+	row := q.queryRow(ctx, q.addAuthTokenStmt, addAuthToken, arg.Token, arg.ParentToken)
+	var created_at time.Time
+	err := row.Scan(&created_at)
+	return created_at, err
+}
+
 const addUser = `-- name: AddUser :exec
 INSERT INTO users (uuid, name, email) VALUES (?, ?, ?)
 `
@@ -37,6 +53,22 @@ type AddUserParams struct {
 func (q *Queries) AddUser(ctx context.Context, arg AddUserParams) error {
 	_, err := q.exec(ctx, q.addUserStmt, addUser, arg.UUID, arg.Name, arg.Email)
 	return err
+}
+
+const checkAuthToken = `-- name: CheckAuthToken :one
+SELECT parent_token, created_at FROM auth_tokens WHERE token = ?
+`
+
+type CheckAuthTokenRow struct {
+	ParentToken string
+	CreatedAt   time.Time
+}
+
+func (q *Queries) CheckAuthToken(ctx context.Context, token string) (CheckAuthTokenRow, error) {
+	row := q.queryRow(ctx, q.checkAuthTokenStmt, checkAuthToken, token)
+	var i CheckAuthTokenRow
+	err := row.Scan(&i.ParentToken, &i.CreatedAt)
+	return i, err
 }
 
 const createEvent = `-- name: CreateEvent :exec
@@ -61,6 +93,17 @@ func (q *Queries) GetEvent(ctx context.Context, uuid string) (Event, error) {
 	row := q.queryRow(ctx, q.getEventStmt, getEvent, uuid)
 	var i Event
 	err := row.Scan(&i.UUID, &i.CreatedAt, &i.Description)
+	return i, err
+}
+
+const getUser = `-- name: GetUser :one
+SELECT uuid, name, email FROM users WHERE uuid = ?
+`
+
+func (q *Queries) GetUser(ctx context.Context, uuid string) (User, error) {
+	row := q.queryRow(ctx, q.getUserStmt, getUser, uuid)
+	var i User
+	err := row.Scan(&i.UUID, &i.Name, &i.Email)
 	return i, err
 }
 
@@ -109,7 +152,7 @@ func (q *Queries) ListEventAttendees(ctx context.Context, eventUuid string) ([]L
 const listEvents = `-- name: ListEvents :many
 SELECT
 	uuid, created_at, description,
-	0 AS attendees
+	(SELECT COUNT(*) FROM event_attendees WHERE event_uuid = events.uuid) AS attendees
 FROM events
 ORDER BY created_at DESC
 `

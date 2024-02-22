@@ -11,17 +11,17 @@
         <p class="description">{{ .Description }}</p>
       </hgroup>
 
-      <aside class="controls">
-        <a href="/" role="button" title="Home">
+      <aside class="button-container">
+        <a href="/" role="button" title="Home" class="secondary">
           {{ template "materialIcon" "home" }}
         </a>
 
-        <a href="/events/{{ .UUID }}/attendees/" role="button">
+        <a href="/events/{{ .UUID }}/attendees" role="button">
           {{ template "materialIcon" "people" }}
           Attendees
         </a>
   
-        <a href="/events/{{ .UUID }}/merge/" role="button">
+        <a href="/events/{{ .UUID }}/merge" role="button">
           {{ template "materialIcon" "merge" }}
           Merge Event
         </a>
@@ -66,13 +66,6 @@
   header a[role="button"] {
     line-height: 0;
     padding: 0.5em;
-  }
-
-  .controls {
-    display: flex;
-    flex-direction: row;
-    flex-wrap: wrap;
-    gap: 0.5em;
   }
 
   .scan-qr-button {

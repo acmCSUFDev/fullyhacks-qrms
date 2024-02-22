@@ -1,5 +1,5 @@
 {{ template "head" . }}
-<title>Fullyhacks Management System</title>
+{{ template "title" "" }}
 
 {{ template "header" . }}
 
@@ -12,15 +12,15 @@
   <article class="events">
     <header>
       <h2>Events</h2>
-      <a href="/events/new/" role="button" title="Add Event">
+      <a href="/events/new" role="button" title="Add Event">
         {{ template "materialIcon" "add" }}
       </a>
     </header>
 
-    <ul class="events-list">
+    <ul class="events-list list-box button-list">
       {{ range .Events }}
         <li>
-          <a href="/events/{{ .UUID }}/" role="button">
+          <a href="/events/{{ .UUID }}" role="button">
             <hgroup>
               <h3><code>{{ .UUID }}</code></h3>
               <p class="description">
@@ -40,47 +40,41 @@
       {{ end }}
     </ul>
   </article>
+
+  <article class="user-list">
+    <header>
+      <h2>Users</h2>
+    </header>
+
+    <div class="button-container">
+      <a href="/users" role="button">
+        {{ template "materialIcon" "people" }}
+        Manage users
+      </a>
+      
+      <a href="/users/add" role="button" class="secondary">
+        {{ template "materialIcon" "add" }}
+        Add user
+      </a>
+    </div>
+  </article>
 </main>
 
 <style>
-  .events header {
+  article header {
     display: flex;
     flex-direction: row;
     justify-content: space-between;
     align-items: center;
   }
 
-  .events header h2 {
+  article header h2 {
     margin: 0;
   }
 
-  .events header a[role="button"] {
+  article header a[role="button"] {
     line-height: 0;
     padding: 0.5em;
-  }
-
-  .events-list,
-  .events-list li {
-    list-style: none;
-    padding: 0;
-    margin: 0;
-  }
-
-  .events-list .placeholder {
-    display: flex;
-    justify-content: center;
-    margin-top: 1em;
-  }
-
-  .events-list a[role="button"] {
-    width: 100%;
-    border: none;
-    text-align: left;
-    background: none;
-  }
-
-  .events-list a[role="button"]:hover {
-    background: var(--pico-muted-border-color);
   }
 
   .events-list code {

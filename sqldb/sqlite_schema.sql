@@ -15,3 +15,10 @@ CREATE TABLE event_attendees (
 	PRIMARY KEY (event_uuid, user_uuid),
 	FOREIGN KEY (event_uuid) REFERENCES events(uuid),
 	FOREIGN KEY (user_uuid) REFERENCES users(uuid));
+
+--------------------------------- NEW VERSION ---------------------------------
+
+CREATE TABLE auth_tokens (
+	token TEXT PRIMARY KEY, -- unique identifier
+	parent_token TEXT NOT NULL,
+	created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP);

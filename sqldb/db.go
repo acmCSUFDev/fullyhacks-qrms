@@ -27,14 +27,23 @@ func Prepare(ctx context.Context, db DBTX) (*Queries, error) {
 	if q.addAttendeeStmt, err = db.PrepareContext(ctx, addAttendee); err != nil {
 		return nil, fmt.Errorf("error preparing query AddAttendee: %w", err)
 	}
+	if q.addAuthTokenStmt, err = db.PrepareContext(ctx, addAuthToken); err != nil {
+		return nil, fmt.Errorf("error preparing query AddAuthToken: %w", err)
+	}
 	if q.addUserStmt, err = db.PrepareContext(ctx, addUser); err != nil {
 		return nil, fmt.Errorf("error preparing query AddUser: %w", err)
+	}
+	if q.checkAuthTokenStmt, err = db.PrepareContext(ctx, checkAuthToken); err != nil {
+		return nil, fmt.Errorf("error preparing query CheckAuthToken: %w", err)
 	}
 	if q.createEventStmt, err = db.PrepareContext(ctx, createEvent); err != nil {
 		return nil, fmt.Errorf("error preparing query CreateEvent: %w", err)
 	}
 	if q.getEventStmt, err = db.PrepareContext(ctx, getEvent); err != nil {
 		return nil, fmt.Errorf("error preparing query GetEvent: %w", err)
+	}
+	if q.getUserStmt, err = db.PrepareContext(ctx, getUser); err != nil {
+		return nil, fmt.Errorf("error preparing query GetUser: %w", err)
 	}
 	if q.listEventAttendeesStmt, err = db.PrepareContext(ctx, listEventAttendees); err != nil {
 		return nil, fmt.Errorf("error preparing query ListEventAttendees: %w", err)
@@ -58,9 +67,19 @@ func (q *Queries) Close() error {
 			err = fmt.Errorf("error closing addAttendeeStmt: %w", cerr)
 		}
 	}
+	if q.addAuthTokenStmt != nil {
+		if cerr := q.addAuthTokenStmt.Close(); cerr != nil {
+			err = fmt.Errorf("error closing addAuthTokenStmt: %w", cerr)
+		}
+	}
 	if q.addUserStmt != nil {
 		if cerr := q.addUserStmt.Close(); cerr != nil {
 			err = fmt.Errorf("error closing addUserStmt: %w", cerr)
+		}
+	}
+	if q.checkAuthTokenStmt != nil {
+		if cerr := q.checkAuthTokenStmt.Close(); cerr != nil {
+			err = fmt.Errorf("error closing checkAuthTokenStmt: %w", cerr)
 		}
 	}
 	if q.createEventStmt != nil {
@@ -71,6 +90,11 @@ func (q *Queries) Close() error {
 	if q.getEventStmt != nil {
 		if cerr := q.getEventStmt.Close(); cerr != nil {
 			err = fmt.Errorf("error closing getEventStmt: %w", cerr)
+		}
+	}
+	if q.getUserStmt != nil {
+		if cerr := q.getUserStmt.Close(); cerr != nil {
+			err = fmt.Errorf("error closing getUserStmt: %w", cerr)
 		}
 	}
 	if q.listEventAttendeesStmt != nil {
@@ -133,9 +157,12 @@ type Queries struct {
 	db                     DBTX
 	tx                     *sql.Tx
 	addAttendeeStmt        *sql.Stmt
+	addAuthTokenStmt       *sql.Stmt
 	addUserStmt            *sql.Stmt
+	checkAuthTokenStmt     *sql.Stmt
 	createEventStmt        *sql.Stmt
 	getEventStmt           *sql.Stmt
+	getUserStmt            *sql.Stmt
 	listEventAttendeesStmt *sql.Stmt
 	listEventsStmt         *sql.Stmt
 	listUsersStmt          *sql.Stmt
@@ -147,9 +174,12 @@ func (q *Queries) WithTx(tx *sql.Tx) *Queries {
 		db:                     tx,
 		tx:                     tx,
 		addAttendeeStmt:        q.addAttendeeStmt,
+		addAuthTokenStmt:       q.addAuthTokenStmt,
 		addUserStmt:            q.addUserStmt,
+		checkAuthTokenStmt:     q.checkAuthTokenStmt,
 		createEventStmt:        q.createEventStmt,
 		getEventStmt:           q.getEventStmt,
+		getUserStmt:            q.getUserStmt,
 		listEventAttendeesStmt: q.listEventAttendeesStmt,
 		listEventsStmt:         q.listEventsStmt,
 		listUsersStmt:          q.listUsersStmt,

@@ -4,10 +4,13 @@ SELECT * FROM users;
 -- name: AddUser :exec
 INSERT INTO users (uuid, name, email) VALUES (?, ?, ?);
 
+-- name: GetUser :one
+SELECT * FROM users WHERE uuid = ?;
+
 -- name: ListEvents :many
 SELECT
 	*,
-	0 AS attendees
+	(SELECT COUNT(*) FROM event_attendees WHERE event_uuid = events.uuid) AS attendees
 FROM events
 ORDER BY created_at DESC;
 
@@ -28,3 +31,9 @@ INSERT INTO event_attendees (event_uuid, user_uuid) VALUES (?, ?);
 
 -- name: MoveAttendees :exec
 UPDATE event_attendees SET event_uuid = ? WHERE event_uuid = ?;
+
+-- name: AddAuthToken :one
+INSERT INTO auth_tokens (token, parent_token) VALUES (?, ?) RETURNING created_at;
+
+-- name: CheckAuthToken :one
+SELECT parent_token, created_at FROM auth_tokens WHERE token = ?;

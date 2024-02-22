@@ -5,6 +5,7 @@ import (
 	"html/template"
 	"io/fs"
 	"net/http"
+	"strings"
 	"time"
 
 	"libdb.so/tmplutil"
@@ -25,6 +26,10 @@ func NewTemplater() *tmplutil.Templater {
 		Functions: template.FuncMap{
 			"rfc3339": func() string { return time.RFC3339 },
 			"rfc822":  func() string { return time.RFC822 },
+			"shortUUID": func(uuid string) string {
+				part, _, _ := strings.Cut(uuid, "-")
+				return part
+			},
 		},
 	}
 	if err := t.Preregister("pages"); err != nil {

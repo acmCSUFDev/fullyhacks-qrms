@@ -8,6 +8,12 @@ import (
 	"time"
 )
 
+type AuthToken struct {
+	Token       string
+	ParentToken string
+	CreatedAt   time.Time
+}
+
 type Event struct {
 	UUID        string
 	CreatedAt   time.Time

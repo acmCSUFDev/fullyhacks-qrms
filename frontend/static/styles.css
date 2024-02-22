@@ -9,6 +9,55 @@ body > main {
 	}
 }
 
+i.placeholder {
+	display: flex;
+	justify-content: center;
+	margin-top: 1em;
+}
+
 .material-symbols-outlined {
 	vertical-align: text-bottom;
+}
+
+button .material-symbols-outlined,
+a[role="button"] .material-symbols-outlined {
+	margin: 0;
+	padding: 0;
+}
+
+ul.list-box,
+ul.list-box li {
+	list-style: none;
+	padding: 0;
+	margin: 0;
+}
+
+ul.list-box li {
+	margin: var(--pico-spacing) 0;
+}
+
+ul.list-box li:last-child {
+	margin-bottom: 0;
+}
+
+.list-box.button-list li {
+	margin: 0;
+}
+
+.button-list a[role="button"] {
+	width: 100%;
+	border: none;
+	text-align: left;
+	background: none;
+}
+
+.button-list a[role="button"]:hover {
+	background: var(--pico-muted-border-color);
+}
+
+.button-container {
+	display: flex;
+	flex-direction: row;
+	flex-wrap: wrap;
+	gap: 0.5em;
 }

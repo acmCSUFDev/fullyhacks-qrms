@@ -10,6 +10,7 @@ import (
 	"os/signal"
 	"path/filepath"
 	"slices"
+	"strings"
 
 	"dev.acmcsuf.com/fullyhacks-qrms/server"
 	"dev.acmcsuf.com/fullyhacks-qrms/sqldb"
@@ -20,20 +21,22 @@ import (
 )
 
 var (
-	addr    = ":5767"
-	db      = "fullyhacks-qrms.db"
-	verbose = false
+	addr          = ":5767"
+	db            = "fullyhacks-qrms.db"
+	rootTokenFile = "root-token.txt"
+	verbose       = false
 )
 
 func init() {
 	flag.StringVar(&addr, "addr", addr, "address to listen on")
 	flag.StringVar(&db, "db", db, "path to the database file")
+	flag.StringVar(&rootTokenFile, "root-token-file", rootTokenFile, "path to the root token file")
 	flag.BoolVar(&verbose, "verbose", verbose, "enable verbose logging")
 	flag.Usage = func() {
 		out := flag.CommandLine.Output()
 
 		fmt.Fprintf(out, "Usage: %s [flags] [command]\n", filepath.Base(os.Args[0]))
-		fmt.Fprintln(out)	
+		fmt.Fprintln(out)
 
 		fmt.Fprintln(out, "Commands:")
 		fmt.Fprintln(out, "  import-users <file>  Import users from a CSV file")
@@ -105,7 +108,7 @@ func importUsers(ctx context.Context, logger *slog.Logger) error {
 	expectedHeader := []string{"Name", "School", "Email", "Food", "Major"}
 	type Record struct {
 		Name  string
-		_     string
+		X1    string
 		Email string
 	}
 
@@ -153,7 +156,16 @@ func startServer(ctx context.Context, logger *slog.Logger) error {
 	}
 	defer db.Close()
 
-	handler := server.NewHandler(db, logger.With("component", "server"))
+	rootToken, err := os.ReadFile(rootTokenFile)
+	if err != nil {
+		return fmt.Errorf("failed to read root token file: %w", err)
+	}
+
+	handler := server.NewHandler(server.Args{
+		Database:  db,
+		Logger:    logger.With("component", "server"),
+		RootToken: strings.TrimSpace(string(rootToken)),
+	})
 
 	logger.Info("Starting server", "addr", addr)
 	return hserve.ListenAndServe(ctx, addr, handler)

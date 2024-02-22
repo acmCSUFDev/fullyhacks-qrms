@@ -9,3 +9,7 @@
   {{ . }}
 </span>
 {{ end }}
+
+{{ define "title" }}
+<title>{{ if . }}{{ . }} - {{ end }}Fullyhacks Management System</title>
+{{ end }}
