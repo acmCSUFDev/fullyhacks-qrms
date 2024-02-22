@@ -11,16 +11,16 @@ import (
 )
 
 const addAttendee = `-- name: AddAttendee :exec
-INSERT INTO event_attendees (event_uuid, user_uuid) VALUES (?, ?)
+INSERT INTO event_attendees (event_uuid, user_code) VALUES (?, ?)
 `
 
 type AddAttendeeParams struct {
 	EventUUID string
-	UserUUID  string
+	UserCode  string
 }
 
 func (q *Queries) AddAttendee(ctx context.Context, arg AddAttendeeParams) error {
-	_, err := q.exec(ctx, q.addAttendeeStmt, addAttendee, arg.EventUUID, arg.UserUUID)
+	_, err := q.exec(ctx, q.addAttendeeStmt, addAttendee, arg.EventUUID, arg.UserCode)
 	return err
 }
 
@@ -41,17 +41,17 @@ func (q *Queries) AddAuthToken(ctx context.Context, arg AddAuthTokenParams) (tim
 }
 
 const addUser = `-- name: AddUser :exec
-INSERT INTO users (uuid, name, email) VALUES (?, ?, ?)
+INSERT INTO users (code, name, email) VALUES (?, ?, ?)
 `
 
 type AddUserParams struct {
-	UUID  string
+	Code  string
 	Name  string
 	Email string
 }
 
 func (q *Queries) AddUser(ctx context.Context, arg AddUserParams) error {
-	_, err := q.exec(ctx, q.addUserStmt, addUser, arg.UUID, arg.Name, arg.Email)
+	_, err := q.exec(ctx, q.addUserStmt, addUser, arg.Code, arg.Name, arg.Email)
 	return err
 }
 
@@ -86,38 +86,64 @@ func (q *Queries) CreateEvent(ctx context.Context, arg CreateEventParams) error 
 }
 
 const getEvent = `-- name: GetEvent :one
-SELECT uuid, created_at, description FROM events WHERE uuid = ?
+SELECT
+	uuid, created_at, description,
+	(SELECT COUNT(*) FROM event_attendees WHERE event_uuid = events.uuid) AS attendees
+FROM events
+WHERE uuid = ?
 `
 
-func (q *Queries) GetEvent(ctx context.Context, uuid string) (Event, error) {
+type GetEventRow struct {
+	UUID        string
+	CreatedAt   time.Time
+	Description string
+	Attendees   int64
+}
+
+func (q *Queries) GetEvent(ctx context.Context, uuid string) (GetEventRow, error) {
 	row := q.queryRow(ctx, q.getEventStmt, getEvent, uuid)
-	var i Event
-	err := row.Scan(&i.UUID, &i.CreatedAt, &i.Description)
+	var i GetEventRow
+	err := row.Scan(
+		&i.UUID,
+		&i.CreatedAt,
+		&i.Description,
+		&i.Attendees,
+	)
 	return i, err
 }
 
 const getUser = `-- name: GetUser :one
-SELECT uuid, name, email FROM users WHERE uuid = ?
+SELECT name FROM users WHERE email = ?
 `
 
-func (q *Queries) GetUser(ctx context.Context, uuid string) (User, error) {
-	row := q.queryRow(ctx, q.getUserStmt, getUser, uuid)
-	var i User
-	err := row.Scan(&i.UUID, &i.Name, &i.Email)
-	return i, err
+func (q *Queries) GetUser(ctx context.Context, email string) (string, error) {
+	row := q.queryRow(ctx, q.getUserStmt, getUser, email)
+	var name string
+	err := row.Scan(&name)
+	return name, err
+}
+
+const getUserCode = `-- name: GetUserCode :one
+SELECT code FROM users WHERE email = ?
+`
+
+func (q *Queries) GetUserCode(ctx context.Context, email string) (string, error) {
+	row := q.queryRow(ctx, q.getUserCodeStmt, getUserCode, email)
+	var code string
+	err := row.Scan(&code)
+	return code, err
 }
 
 const listEventAttendees = `-- name: ListEventAttendees :many
-SELECT users.email, users.name, users.uuid, event_attendees.created_at
+SELECT users.email, users.name, event_attendees.created_at
 FROM  event_attendees
-INNER JOIN users ON event_attendees.user_uuid = users.uuid
+INNER JOIN users ON event_attendees.user_code = users.code
 WHERE event_uuid = ?
 `
 
 type ListEventAttendeesRow struct {
 	Email     string
 	Name      string
-	UUID      string
 	CreatedAt time.Time
 }
 
@@ -130,12 +156,7 @@ func (q *Queries) ListEventAttendees(ctx context.Context, eventUuid string) ([]L
 	var items []ListEventAttendeesRow
 	for rows.Next() {
 		var i ListEventAttendeesRow
-		if err := rows.Scan(
-			&i.Email,
-			&i.Name,
-			&i.UUID,
-			&i.CreatedAt,
-		); err != nil {
+		if err := rows.Scan(&i.Email, &i.Name, &i.CreatedAt); err != nil {
 			return nil, err
 		}
 		items = append(items, i)
@@ -193,7 +214,7 @@ func (q *Queries) ListEvents(ctx context.Context) ([]ListEventsRow, error) {
 }
 
 const listUsers = `-- name: ListUsers :many
-SELECT uuid, name, email FROM users
+SELECT email, code, name FROM users
 `
 
 func (q *Queries) ListUsers(ctx context.Context) ([]User, error) {
@@ -205,7 +226,7 @@ func (q *Queries) ListUsers(ctx context.Context) ([]User, error) {
 	var items []User
 	for rows.Next() {
 		var i User
-		if err := rows.Scan(&i.UUID, &i.Name, &i.Email); err != nil {
+		if err := rows.Scan(&i.Email, &i.Code, &i.Name); err != nil {
 			return nil, err
 		}
 		items = append(items, i)

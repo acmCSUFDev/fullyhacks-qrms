@@ -10,10 +10,6 @@
       </hgroup>
 
       <aside class="button-container">
-        <a href="/" role="button" title="Home" class="secondary">
-          {{ template "materialIcon" "home" }}
-        </a>
-
         <a href="/users/qr_codes.zip" role="button" title="Export all QR codes">
           {{ template "materialIcon" "qr_code" }}
           Export all QR codes <code>.zip</code>
@@ -26,16 +22,20 @@
       </aside>
     </header>
 
-    <input type="search" id="search" placeholder="Search users" disabled />
+    <input
+      type="search"
+      id="user-search"
+      disabled
+      placeholder="Search users"
+      data-search="#user-list .user"
+      data-search-selectors=".name, .email"
+    />
 
-    <ul class="user-list list-box button-list">
+    <ul id="user-list" class="list-box button-list">
       {{ range .Users }}
-        <li class="user" id="{{ .UUID }}">
-          <a href="/users/{{ .UUID }}/qr.png" role="button" title="Show user's QR">
-            <h3 class="name">
-              {{ .Name }}
-              <sub class="uuid"><code>{{ shortUUID .UUID }}</code></sub>
-            </h3>
+        <li class="user" id="{{ .Email }}">
+          <a href="/users/{{ .Email }}/qr.png" role="button" title="Show user's QR">
+            <h3 class="name">{{ .Name }}</h3>
             <p class="email">{{ .Email }}</p>
           </a>
         </li>
@@ -57,78 +57,19 @@
     color: var(--pico-color);
   }
 
-  .user-list.button-list .uuid {
-    float: right;
-  }
-
-  .user-list.button-list .name {
+  #user-list.button-list .name {
     margin-bottom: 0.25em;
   }
 
-  .user .name,
-  .user .email {
-    margin: 0;
-  }
-
-  .user .name {
-    font-size: 1em;
-  }
-
-  .user .email {
-    margin-bottom: 0.25em;
-  }
-
-  .user .uuid,
-  .user .email {
-    font-size: 0.8em;
-    color: var(--pico-muted-color);
-  }
-
-  .user {
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-    justify-content: space-between;
-  }
-
-  .user:target a[role="button"] {
-    background-color: var(--pico-primary-focus);
-  }
-
-  .user .button-container > * {
-    padding: 0.5em;
-  }
 </style>
 
 <script type="module" async defer>
-  const search = document.getElementById('search');
-
-  function updateSearch() {
-    const query = search.value.toLowerCase();
-    const users = document.querySelectorAll('.user-list .user');
-
-    users.forEach(user => {
-      const name = user.querySelector('.name').textContent.toLowerCase();
-      const email = user.querySelector('.email').textContent.toLowerCase();
-
-      if (name.includes(query) || email.includes(query)) {
-        user.style.display = 'block';
-      } else {
-        user.style.display = 'none';
-      }
-    });
-  }
-
-  search.disabled = false;
-  search.addEventListener('input', updateSearch);
+  import { updateSearch } from "/search.js";
 
   const hash = window.location.hash;
   if (hash) {
-    const user = document.getElementById(hash.slice(1));
-    if (user) {
-      const email = user.querySelector('.email').textContent;
-      search.value = email;
-      updateSearch();
-    }
+    const search = document.getElementById("user-search");
+    search.value = hash.slice(1);
+    updateSearch(search);
   }
 </script>

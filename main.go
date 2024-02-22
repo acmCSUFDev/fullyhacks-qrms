@@ -124,14 +124,17 @@ func importUsers(ctx context.Context, logger *slog.Logger) error {
 	var errored bool
 	err = db.Tx(func(q *sqldb.Queries) error {
 		for _, record := range records {
+			user := sqldb.NewUser(record.Name, record.Email)
+
 			if err := q.AddUser(ctx, sqldb.AddUserParams{
-				UUID:  sqldb.GenerateUUID(),
-				Name:  record.Name,
 				Email: record.Email,
+				Code:  user.Code,
+				Name:  record.Name,
 			}); err != nil {
 				slog.Error(
 					"Failed to insert user",
 					"error", err,
+					"user.code", user.Code,
 					"user.name", record.Name,
 					"user.email", record.Email)
 				errored = true

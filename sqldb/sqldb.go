@@ -2,7 +2,10 @@ package sqldb
 
 import (
 	"context"
+	"crypto/rand"
+	"crypto/sha256"
 	"database/sql"
+	"encoding/base64"
 	"fmt"
 
 	_ "embed"
@@ -84,3 +87,23 @@ func (db *Database) Tx(f func(*Queries) error) error {
 
 // GenerateUUID generates a new UUID.
 func GenerateUUID() string { return uuid.New().String() }
+
+// NewUser creates a new user.
+func NewUser(name, email string) User {
+	var randBytes [4]byte
+	_, err := rand.Read(randBytes[:])
+	if err != nil {
+		panic(err)
+	}
+	randBits := base64.RawURLEncoding.EncodeToString(randBytes[:])
+
+	userHash := sha256.Sum256([]byte(email))
+	userBits := base64.RawURLEncoding.EncodeToString(userHash[:])[:6]
+	code := "fullyhacks:" + randBits + userBits
+
+	return User{
+		Email: email,
+		Code:  code,
+		Name:  name,
+	}
+}

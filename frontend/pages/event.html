@@ -6,19 +6,16 @@
 <main id="event-page" class="container">
   <article class="qr-scanner">
     <header>
-      <hgroup>
+      <hgroup class="event-header">
         <h2><code>{{ .UUID }}</code></h2>
         <p class="description">{{ .Description }}</p>
       </hgroup>
 
       <aside class="button-container">
-        <a href="/" role="button" title="Home" class="secondary">
-          {{ template "materialIcon" "home" }}
-        </a>
-
         <a href="/events/{{ .UUID }}/attendees" role="button">
           {{ template "materialIcon" "people" }}
-          Attendees
+          {{ .Attendees }}
+          {{ if eq .Attendees 1 }}attendee{{ else }}attendees{{ end }}
         </a>
   
         <a href="/events/{{ .UUID }}/merge" role="button">
@@ -30,38 +27,16 @@
   
     <h4>Scan QR Code</h4>
 
+    <noscript>
+      <p>JavaScript is required to use the QR scanner.</p>
+    </noscript>
+
     <video id="qr-video"></video>
     <p id="qr-status">Initializing...</p>
   </article>
 </main>
 
 <style>
-  html, body {
-    height: 100%;
-  }
-
-  body {
-    display: flex;
-    flex-direction: column;
-  }
-
-  main {
-    flex: 1;
-
-    display: flex;
-    flex-direction: column;
-  }
-
-  header h2 {
-    margin: 0;
-  }
-
-  header code {
-    background: none;
-    color: var(--pico-color);
-    padding: 0;
-  }
-
   header button,
   header a[role="button"] {
     line-height: 0;
@@ -73,23 +48,15 @@
     --pico-border-color: var(--pico-muted-color);
   }
 
-  .qr-scanner {
-    flex: 1;
-
-    display: flex;
-    flex-direction: column;
-  }
-
   #qr-video {
-    flex: 1;
-
     width: 100%;
     height: auto;
+    max-height: 90vh;
   }
 
   #qr-status {
-    margin: 0;
-    margin-top: var(--pico-typography-spacing-vertical) 0;
+    margin: var(--pico-typography-spacing-vertical) 0;
+    margin-bottom: 0;
     text-align: center;
   }
 
@@ -114,25 +81,62 @@
     status: document.getElementById("qr-status"),
   };
 
+  let statusTimeout;
+  function setStatus(status, error = false) {
+    if (statusTimeout) {
+      clearTimeout(statusTimeout);
+      statusTimeout = null;
+    }
+
+    if (error) {
+      e.status.classList.add("error");
+    } else {
+      e.status.classList.remove("error");
+    }
+
+    if (!status) {
+      e.status.textContent = "Scanning...";
+      return;
+    }
+
+    e.status.textContent = status;
+    console.log("QR scanning status:", status);
+    statusTimeout = setTimeout(() => setStatus(), 2000);
+  }
+
+  async function onQRScanned(result) {
+    try {
+      setStatus("Scanned QR code, processing...");
+
+      const r = await fetch("/events/{{ .UUID }}/attendees", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ user_code: result }),
+      });
+
+      if (!r.ok) {
+        if (r.headers.get("Content-Type") === "application/json") {
+          const body = await r.json();
+          if (body.error) {
+            throw new Error(body.error);
+          }
+        }
+        throw new Error("Failed to process QR code.");
+      }
+
+      setStatus("Scanned QR code, processed!");
+    } catch(err) {
+      setStatus(`Error: ${err.message}`, true);
+      return;
+    }
+  }
+
   try {
     const hasCamera = await QRScanner.hasCamera();
     if (!hasCamera) {
       throw new Error("No camera found.");
-    }
-  
-    let statusTimeout;
-    function onQRScanned(result) {
-      console.log("QR scanned", result);
-      e.status.textContent = `Scanned: ${result}`;
-  
-      if (statusTimeout) {
-        clearTimeout(statusTimeout);
-        statusTimeout = null;
-      }
-  
-      statusTimeout = setTimeout(() => {
-        e.status.textContent = "Scanning...";
-      }, 2000);
     }
   
     const scanner = new QRScanner(e.video, onQRScanned, {

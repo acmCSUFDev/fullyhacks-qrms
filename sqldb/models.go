@@ -22,12 +22,12 @@ type Event struct {
 
 type EventAttendee struct {
 	EventUUID string
-	UserUUID  string
+	UserCode  string
 	CreatedAt time.Time
 }
 
 type User struct {
-	UUID  string
-	Name  string
 	Email string
+	Code  string
+	Name  string
 }

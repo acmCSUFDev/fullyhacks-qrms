@@ -3,8 +3,6 @@ package server
 import (
 	"archive/zip"
 	"bytes"
-	"crypto/sha256"
-	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"image"
@@ -13,7 +11,6 @@ import (
 	"net/http"
 
 	"dev.acmcsuf.com/fullyhacks-qrms/sqldb"
-	"github.com/google/uuid"
 	"github.com/skip2/go-qrcode"
 	"github.com/sourcegraph/conc/iter"
 )
@@ -42,18 +39,18 @@ func (h *Handler) addUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	uuid := sqldb.GenerateUUID()
+	user := sqldb.NewUser(name, email)
 
 	if err := h.db.AddUser(r.Context(), sqldb.AddUserParams{
-		UUID:  uuid,
-		Name:  name,
 		Email: email,
+		Code:  user.Code,
+		Name:  name,
 	}); err != nil {
 		h.renderErrorWithCode(w, 500, fmt.Errorf("failed to create user: %w", err))
 		return
 	}
 
-	http.Redirect(w, r, "/users#"+uuid, 303)
+	http.Redirect(w, r, "/users#"+email, 303)
 }
 
 func (h *Handler) getAllUserQRs(w http.ResponseWriter, r *http.Request) {
@@ -97,12 +94,7 @@ func (h *Handler) getAllUserQRs(w http.ResponseWriter, r *http.Request) {
 	}
 
 	pngs, err := iter.MapErr(users, func(u *sqldb.User) (renderedPNG, error) {
-		seed, err := createUserQRSeed(*u)
-		if err != nil {
-			return renderedPNG{}, fmt.Errorf("failed to create QR seed: %w", err)
-		}
-
-		qrImage, err := renderUserQR(*u)
+		qrImage, err := renderQRImage(u.Code)
 		if err != nil {
 			return renderedPNG{}, fmt.Errorf("failed to render QR code: %w", err)
 		}
@@ -114,7 +106,7 @@ func (h *Handler) getAllUserQRs(w http.ResponseWriter, r *http.Request) {
 		}
 
 		return renderedPNG{
-			Name: seed + ".png",
+			Name: u.Code + ".png",
 			Data: b.Bytes(),
 		}, nil
 	})
@@ -146,15 +138,15 @@ func (h *Handler) getAllUserQRs(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) getUserQRAsPNG(w http.ResponseWriter, r *http.Request) {
-	uuid := r.PathValue("uuid")
+	email := r.PathValue("email")
 
-	u, err := h.db.GetUser(r.Context(), uuid)
+	code, err := h.db.GetUserCode(r.Context(), email)
 	if err != nil {
 		h.renderErrorWithCode(w, 400, fmt.Errorf("failed to find user: %w", err))
 		return
 	}
 
-	qrImage, err := renderUserQR(u)
+	qrImage, err := renderQRImage(code)
 	if err != nil {
 		h.renderErrorWithCode(w, 500, fmt.Errorf("failed to render QR code: %w", err))
 		return
@@ -167,13 +159,8 @@ func (h *Handler) getUserQRAsPNG(w http.ResponseWriter, r *http.Request) {
 // qrModuleSize is the size of each module (dot) in the QR code.
 const qrModuleSize = 8
 
-func renderUserQR(u sqldb.User) (image.Image, error) {
-	seed, err := createUserQRSeed(u)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create QR seed: %w", err)
-	}
-
-	qr, err := qrcode.New(seed, qrcode.Medium)
+func renderQRImage(data string) (image.Image, error) {
+	qr, err := qrcode.New(data, qrcode.Medium)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create QR code: %w", err)
 	}
@@ -185,30 +172,10 @@ func renderImageToPNG(w io.Writer, img image.Image) error {
 	return png.Encode(w, img)
 }
 
-// createUserQRSeed creates a seed for the user's QR code.
-// It uses the first 6 bytes of the UUID and the first 6 bytes of the
-// SHA-256 hash of the user's email to create a seed.
-func createUserQRSeed(u sqldb.User) (string, error) {
-	uuid, err := uuid.Parse(u.UUID)
-	if err != nil {
-		return "", fmt.Errorf("failed to parse UUID: %w", err)
-	}
-	uuidBits := base64.URLEncoding.EncodeToString(uuid[:])[:6]
-
-	userHash := sha256.Sum256([]byte(u.Email))
-	userBits := base64.URLEncoding.EncodeToString(userHash[:])[:6]
-
-	return "fullyhacks:" + uuidBits + userBits, nil
-}
-
 func renderQRMappingFile(users []sqldb.User, w io.Writer) error {
 	mappings := make(map[string]string, len(users))
 	for _, u := range users {
-		seed, err := createUserQRSeed(u)
-		if err != nil {
-			return fmt.Errorf("failed to create QR seed: %w", err)
-		}
-		mappings[seed] = u.Email
+		mappings[u.Code] = u.Email
 	}
 
 	enc := json.NewEncoder(w)

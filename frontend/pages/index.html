@@ -28,15 +28,20 @@
               </p>
             </hgroup>
             <footer>
-              <span class="attendees">{{ .Attendees }} attendees</span>
-              <span class="timestamp">created {{ template "relativeTimestamp" .CreatedAt }}</span>
+              <span class="attendees">
+                {{ .Attendees }} 
+                {{ if eq .Attendees 1 }}attendee{{ else }}attendees{{ end }}
+              </span>
+              <span class="timestamp">
+                created {{ template "relativeTimestamp" .CreatedAt }}
+              </span>
             </footer>
           </a>
         </li>
       {{ else }}
-      <i class="placeholder">
-        No events yet. Create one by clicking the "New" button above.
-      </i>
+        <i class="placeholder">
+          No events yet. Create one by clicking the "New" button above.
+        </i>
       {{ end }}
     </ul>
   </article>

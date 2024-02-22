@@ -12,7 +12,6 @@ body > main {
 i.placeholder {
 	display: flex;
 	justify-content: center;
-	margin-top: 1em;
 }
 
 .material-symbols-outlined {
@@ -60,4 +59,48 @@ ul.list-box li:last-child {
 	flex-direction: row;
 	flex-wrap: wrap;
 	gap: 0.5em;
+}
+
+.event-header h2 {
+	margin: 0;
+}
+
+.event-header code {
+	background: none;
+	color: var(--pico-color);
+	padding: 0;
+}
+
+header > hgroup:only-child {
+	margin-bottom: 0;
+}
+
+#user-list .user .name,
+#user-list .user .email {
+  margin: 0;
+}
+
+#user-list .user .name {
+  font-size: 1em;
+  margin-bottom: 0.25em;
+}
+
+#user-list .user .email {
+  font-size: 0.8em;
+  color: var(--pico-muted-color);
+}
+
+#user-list .user {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+}
+
+#user-list .user:target a[role="button"] {
+  background-color: var(--pico-primary-focus);
+}
+
+#user-list .user .button-container > * {
+  padding: 0.5em;
 }

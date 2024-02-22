@@ -5,7 +5,6 @@ import (
 	"encoding/base64"
 	"errors"
 	"fmt"
-	"log/slog"
 	"net/http"
 	"time"
 
@@ -66,12 +65,6 @@ const dayDuration = 24 * time.Hour
 var errTokenNotFound = fmt.Errorf("token not found")
 
 func (h *Handler) getAuth(w http.ResponseWriter, r *http.Request) {
-	_, authenticated := ctxt.From[authorization](r.Context())
-	if authenticated {
-		h.renderErrorWithCode(w, 400, fmt.Errorf("already authenticated"))
-		return
-	}
-
 	parentToken := r.PathValue("token")
 	newToken := generateNewToken()
 
@@ -105,7 +98,7 @@ func (h *Handler) getAuth(w http.ResponseWriter, r *http.Request) {
 		return err
 	})
 	if err != nil {
-		slog.Error(
+		h.logger.Error(
 			"Failed to authenticate",
 			"token", parentToken,
 			"error", err)

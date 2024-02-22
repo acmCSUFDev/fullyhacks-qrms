@@ -1,0 +1,47 @@
+{{ template "head" . }}
+<title>Event - Fullyhacks Management System</title>
+
+{{ template "header" . }}
+
+<main id="event-page" class="container">
+  <article class="qr-scanner">
+    <header>
+      <hgroup class="event-header">
+        <h2><code>{{ .UUID }}</code></h2>
+        <p class="description">{{ .Description }}</p>
+      </hgroup>
+    </header>
+
+    <input
+      type="search"
+      id="user-search"
+      disabled
+      placeholder="Search users"
+      data-search="#user-list .user"
+      data-search-selectors=".name, .email"
+    />
+
+    <ul id="user-list" class="list-box button-list">
+      {{ range .Attendees }}
+        <li class="user" id="{{ .Email }}">
+          <a href="/users/{{ .Email }}/qr.png" role="button" title="Show user's QR">
+            <h3 class="name">{{ .Name }}</h3>
+            <p class="email">{{ .Email }}</p>
+          </a>
+        </li>
+      {{ else }}
+        <i class="placeholder">No users scanned.</i>
+      {{ end }}
+    </ul>
+  </article>
+</main>
+
+<style>
+  #user-list.button-list .name {
+    margin-bottom: 0.25em;
+  }
+</style>
+
+<script type="module" async defer>
+  import "/search.js";
+</script>

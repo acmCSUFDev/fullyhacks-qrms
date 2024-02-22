@@ -10,6 +10,7 @@ import (
 	"dev.acmcsuf.com/fullyhacks-qrms/sqldb"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
+	"libdb.so/hrt"
 	"libdb.so/tmplutil"
 )
 
@@ -43,43 +44,57 @@ func NewHandler(args Args) *Handler {
 	}
 
 	m := h.mux
+
 	m.Use(middleware.CleanPath)
+	m.Use(hrt.Use(hrt.Opts{
+		Encoder:     hrt.JSONEncoder,
+		ErrorWriter: hrt.JSONErrorWriter("error"),
+	}))
+
 	m.NotFound(func(w http.ResponseWriter, r *http.Request) {
 		h.renderErrorWithCode(w, 404, fmt.Errorf("page not found"))
 	})
 
-	m.With(h.useAuth).Get("/auth/{token}", h.getAuth)
-
 	m.Group(func(m chi.Router) {
-		m.Use(h.useAuth)
-		m.Use(h.requireAuth)
+		// m.Use(slogchi.NewWithConfig(h.logger, slogchi.Config{
+		// 	DefaultLevel:     slog.LevelDebug,
+		// 	ClientErrorLevel: slog.LevelDebug,
+		// 	ServerErrorLevel: slog.LevelWarn,
+		// }))
 
-		m.Get("/", h.getIndex)
+		m.Get("/auth/{token}", h.getAuth)
 
-		m.Route("/users", func(m chi.Router) {
-			m.Get("/", h.listUsersPage)
-			m.Get("/{uuid}/qr.png", h.getUserQRAsPNG)
+		m.Group(func(m chi.Router) {
+			m.Use(h.useAuth)
+			m.Use(h.requireAuth)
 
-			m.Get("/add", h.addUserPage)
-			m.Post("/add", h.addUser)
+			m.Get("/", h.getIndex)
 
-			// This endpoint is super heavy, so we throttle it really hard.
-			m.With(middleware.Throttle(1)).Get("/qr_codes.zip", h.getAllUserQRs)
-		})
+			m.Route("/users", func(m chi.Router) {
+				m.Get("/", h.listUsersPage)
+				m.Get("/{email}/qr.png", h.getUserQRAsPNG)
 
-		m.Route("/events", func(m chi.Router) {
-			m.Get("/new", h.getNewEvent)
-			m.Post("/new", h.postNewEvent)
+				m.Get("/add", h.addUserPage)
+				m.Post("/add", h.addUser)
 
-			m.Route("/{id}", func(m chi.Router) {
-				m.Get("/", h.getEvent)
-				m.Get("/attendees", h.getEventAttendees)
+				// This endpoint is super heavy, so we throttle it really hard.
+				m.With(middleware.Throttle(1)).Get("/qr_codes.zip", h.getAllUserQRs)
+			})
 
-				m.Get("/scan", h.getScanEvent)
-				m.Post("/scan", h.postScanEvent)
+			m.Route("/events", func(m chi.Router) {
+				m.Get("/new", h.getNewEvent)
+				m.Post("/new", h.postNewEvent)
 
-				m.Get("/merge", h.getMergeEvent)
-				m.Post("/merge", h.postMergeEvent)
+				m.Route("/{id}", func(m chi.Router) {
+					m.Get("/", h.getEvent)
+					m.Get("/scan", h.getScanEvent)
+
+					m.Get("/attendees", h.getEventAttendees)
+					m.Post("/attendees", hrt.Wrap(h.addEventAttendee))
+
+					m.Get("/merge", h.getMergeEvent)
+					m.Post("/merge", h.postMergeEvent)
+				})
 			})
 		})
 	})
@@ -94,6 +109,7 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) renderErrorWithCode(w http.ResponseWriter, code int, err error) {
+	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 	w.WriteHeader(code)
 	h.renderError(w, err)
 }
