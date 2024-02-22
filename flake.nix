@@ -11,17 +11,41 @@
 		{ self, nixpkgs, flake-utils, gomod2nix }:
 
 		flake-utils.lib.eachDefaultSystem (system:
-			with gomod2nix.legacyPackages.${system};
-			with nixpkgs.legacyPackages.${system}.extend (self: super: {
-				go = super.go_1_22;
-			});
-			{
+			let
+				pkgs = nixpkgs.legacyPackages.${system}.extend (self: super: {
+					go = super.go_1_22;
+				});
+
+				buildGoApplication = gomod2nix.legacyPackages.${system}.buildGoApplication;
+				gomod2nixTool = gomod2nix.packages.${system}.default.override {
+					inherit (pkgs) go;
+				};
+			in
+			with pkgs; {
+				packages.default = buildGoApplication {
+					inherit (pkgs) go;
+
+					name = "fullyhacks-qrms";
+
+					pwd = ./.;
+					src = ./.;
+					modules = ./gomod2nix.toml;
+					subPackages = [ "." ];
+
+					preBuild = "go generate ./...";
+
+					nativeBuildInputs = [
+						sqlc
+						gomod2nixTool
+					];
+				};
 				devShell = mkShell {
 					packages = [
 						go
 						gopls
 						go-tools
 						sqlc
+						gomod2nixTool
 					];
 				};
 			}
