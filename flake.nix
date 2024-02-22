@@ -2,13 +2,14 @@
 	inputs = {
 		nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
 		flake-utils.url = "github:numtide/flake-utils";
+		flake-compat.url = "https://flakehub.com/f/edolstra/flake-compat/1.tar.gz";
 		gomod2nix.url = "github:nix-community/gomod2nix";
 		gomod2nix.inputs.nixpkgs.follows = "nixpkgs";
 		gomod2nix.inputs.flake-utils.follows = "flake-utils";
 	};
 
 	outputs =
-		{ self, nixpkgs, flake-utils, gomod2nix }:
+		{ self, nixpkgs, flake-utils, flake-compat, gomod2nix }:
 
 		flake-utils.lib.eachDefaultSystem (system:
 			let
