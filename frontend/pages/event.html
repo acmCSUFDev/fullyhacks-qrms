@@ -3,7 +3,7 @@
 
 {{ template "header" . }}
 
-<main id="event-page">
+<main id="event-page" class="container">
   <article class="qr-scanner">
     <header>
       <hgroup>
@@ -12,6 +12,10 @@
       </hgroup>
 
       <aside class="controls">
+        <a href="/" role="button" title="Home">
+          {{ template "materialIcon" "home" }}
+        </a>
+
         <a href="/events/{{ .UUID }}/attendees/" role="button">
           {{ template "materialIcon" "people" }}
           Attendees
