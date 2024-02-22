@@ -34,12 +34,8 @@
     },
     "gomod2nix": {
       "inputs": {
-        "flake-utils": [
-          "flake-utils"
-        ],
-        "nixpkgs": [
-          "nixpkgs"
-        ]
+        "flake-utils": ["flake-utils"],
+        "nixpkgs": ["nixpkgs"]
       },
       "locked": {
         "lastModified": 1705314449,
@@ -71,12 +67,50 @@
         "type": "github"
       }
     },
+    "npmlock2nix": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1673447413,
+        "narHash": "sha256-sJM82Sj8yfQYs9axEmGZ9Evzdv/kDcI9sddqJ45frrU=",
+        "owner": "nix-community",
+        "repo": "npmlock2nix",
+        "rev": "9197bbf397d76059a76310523d45df10d2e4ca81",
+        "type": "github"
+      },
+      "original": {
+        "owner": "nix-community",
+        "repo": "npmlock2nix",
+        "type": "github"
+      }
+    },
+    "prettier-gohtml-nix": {
+      "inputs": {
+        "flake-compat": ["flake-compat"],
+        "flake-utils": ["flake-utils"],
+        "nixpkgs": ["nixpkgs"],
+        "npmlock2nix": "npmlock2nix"
+      },
+      "locked": {
+        "lastModified": 1708611356,
+        "narHash": "sha256-Xm0JbzrXzjw071aiejeE1Y9qeAB3yZJJuch91WCtL5k=",
+        "owner": "diamondburned",
+        "repo": "prettier-gohtml-nix",
+        "rev": "491be94609fddd5997db771dec2b71db3fc13a37",
+        "type": "github"
+      },
+      "original": {
+        "owner": "diamondburned",
+        "repo": "prettier-gohtml-nix",
+        "type": "github"
+      }
+    },
     "root": {
       "inputs": {
         "flake-compat": "flake-compat",
         "flake-utils": "flake-utils",
         "gomod2nix": "gomod2nix",
-        "nixpkgs": "nixpkgs"
+        "nixpkgs": "nixpkgs",
+        "prettier-gohtml-nix": "prettier-gohtml-nix"
       }
     },
     "systems": {

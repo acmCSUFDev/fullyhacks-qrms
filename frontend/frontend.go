@@ -2,6 +2,7 @@ package frontend
 
 import (
 	"embed"
+	"fmt"
 	"html/template"
 	"io/fs"
 	"net/http"
@@ -29,6 +30,12 @@ func NewTemplater() *tmplutil.Templater {
 			"shortUUID": func(uuid string) string {
 				part, _, _ := strings.Cut(uuid, "-")
 				return part
+			},
+			"plural": func(n int, singular, plural string) string {
+				if n == 1 {
+					return fmt.Sprintf("%d %s", n, singular)
+				}
+				return fmt.Sprintf("%d %s", n, plural)
 			},
 		},
 	}

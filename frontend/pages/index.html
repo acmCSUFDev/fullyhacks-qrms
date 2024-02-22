@@ -1,7 +1,7 @@
 {{ template "head" . }}
 {{ template "title" "" }}
-
 {{ template "header" . }}
+
 
 <main id="main-page" class="container">
   <hgroup>
@@ -23,25 +23,21 @@
           <a href="/events/{{ .UUID }}" role="button">
             <hgroup>
               <h3><code>{{ .UUID }}</code></h3>
-              <p class="description">
-                {{ .Description }}
-              </p>
+              <p class="description">{{ .Description }}</p>
             </hgroup>
             <footer>
               <span class="attendees">
-                {{ .Attendees }} 
-                {{ if eq .Attendees 1 }}attendee{{ else }}attendees{{ end }}
+                {{ plural .Attendees "attendee" "attendees" }}
               </span>
               <span class="timestamp">
-                created {{ template "relativeTimestamp" .CreatedAt }}
+                created
+                {{ template "relativeTimestamp" .CreatedAt }}
               </span>
             </footer>
           </a>
         </li>
       {{ else }}
-        <i class="placeholder">
-          No events yet. Create one by clicking the "New" button above.
-        </i>
+        <i class="placeholder">No events yet. Create one by clicking the "New" button above.</i>
       {{ end }}
     </ul>
   </article>
@@ -52,14 +48,9 @@
     </header>
 
     <div class="button-container">
-      <a href="/users" role="button">
-        {{ template "materialIcon" "people" }}
-        Manage users
-      </a>
-      
+      <a href="/users" role="button">{{ template "materialIcon" "people" }} Manage users</a>
       <a href="/users/add" role="button" class="secondary">
-        {{ template "materialIcon" "add" }}
-        Add user
+        {{ template "materialIcon" "add" }} Add user
       </a>
     </div>
   </article>

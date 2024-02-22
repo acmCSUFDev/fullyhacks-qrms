@@ -1,15 +1,17 @@
 {{ define "relativeTimestamp" }}
-<time class="relative" datetime="{{ .Format rfc3339  }}">
-  at {{ .Format rfc822 }}
-</time>
+  <time class="relative" datetime="{{ .Format rfc3339 }}">
+    at
+    {{ .Format rfc822 }}
+  </time>
 {{ end }}
 
+
+<!-- prettier-ignore -->
 {{ define "materialIcon" }}
-<span class="material-symbols-outlined">
-  {{ . }}
-</span>
+<span class="material-symbols-outlined"> {{ . }} </span>
 {{ end }}
 
+<!-- prettier-ignore -->
 {{ define "title" }}
 <title>{{ if . }}{{ . }} - {{ end }}Fullyhacks Management System</title>
 {{ end }}

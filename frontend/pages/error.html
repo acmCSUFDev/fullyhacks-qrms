@@ -1,13 +1,15 @@
 {{ template "head" }}
+
+
 <title>Error</title>
 
 <main id="error-page" class="container">
-	<h1>Error!</h1>
-	<p>
+  <h1>Error!</h1>
+  <p>
     {{ if eq .Error "page not found" }}
-    <span>Page not found! <a href="/">Go back home</a>.</span>
+      <span>Page not found! <a href="/">Go back home</a>.</span>
     {{ else }}
-    {{ .Error }}
+      {{ .Error }}
     {{ end }}
   </p>
 </main>

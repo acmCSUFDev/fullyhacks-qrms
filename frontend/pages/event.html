@@ -3,6 +3,7 @@
 
 {{ template "header" . }}
 
+
 <main id="event-page" class="container">
   <article class="qr-scanner">
     <header>
@@ -14,17 +15,17 @@
       <aside class="button-container">
         <a href="/events/{{ .UUID }}/attendees" role="button">
           {{ template "materialIcon" "people" }}
-          {{ .Attendees }}
-          {{ if eq .Attendees 1 }}attendee{{ else }}attendees{{ end }}
+          {{ plural .Attendees "Attendee"
+            "Attendees"
+          }}
         </a>
-  
+
         <a href="/events/{{ .UUID }}/merge" role="button">
-          {{ template "materialIcon" "merge" }}
-          Merge Event
+          {{ template "materialIcon" "merge" }} Merge Event
         </a>
       </aside>
     </header>
-  
+
     <h4>Scan QR Code</h4>
 
     <noscript>
@@ -114,7 +115,7 @@
     try {
       const user = await addAttendeeQR(result.data);
       setStatus(user.name, "scanned-user");
-    } catch(err) {
+    } catch (err) {
       setStatus(`${err.message}`, "error");
     } finally {
       await sleep(scanDelay);
@@ -148,15 +149,15 @@
     if (!hasCamera) {
       throw new Error("No camera found.");
     }
-  
+
     const scanner = new QRScanner(e.video, onQRScanned, {
       highlightScanRegion: true,
       highlightCodeOutline: true,
     });
-  
+
     scanner.start();
     e.status.textContent = "Scanning...";
-  } catch(err) {
+  } catch (err) {
     alert("Error initializing QR scanner!");
     e.status.textContent = `Error: ${err.message}`;
     e.status.classList.add("error");

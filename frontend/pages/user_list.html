@@ -1,6 +1,7 @@
 {{ template "head" }}
 {{ template "title" "Users" }}
 
+
 <main id="user-list-page" class="container">
   <article class="user-list">
     <header>
@@ -11,13 +12,12 @@
 
       <aside class="button-container">
         <a href="/users/qr_codes.zip" role="button" title="Export all QR codes">
-          {{ template "materialIcon" "qr_code" }}
-          Export all QR codes <code>.zip</code>
+          {{ template "materialIcon" "qr_code" }} Export all QR codes
+          <code>.zip</code>
         </a>
-  
+
         <a href="/users/add" role="button" title="Add User">
-          {{ template "materialIcon" "add" }}
-          Add user
+          {{ template "materialIcon" "add" }} Add user
         </a>
       </aside>
     </header>
@@ -60,7 +60,6 @@
   #user-list.button-list .name {
     margin-bottom: 0.25em;
   }
-
 </style>
 
 <script type="module" async defer>
