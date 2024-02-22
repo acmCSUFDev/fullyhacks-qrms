@@ -112,17 +112,6 @@ func (q *Queries) GetEvent(ctx context.Context, uuid string) (GetEventRow, error
 	return i, err
 }
 
-const getUser = `-- name: GetUser :one
-SELECT name FROM users WHERE email = ?
-`
-
-func (q *Queries) GetUser(ctx context.Context, email string) (string, error) {
-	row := q.queryRow(ctx, q.getUserStmt, getUser, email)
-	var name string
-	err := row.Scan(&name)
-	return name, err
-}
-
 const getUserCode = `-- name: GetUserCode :one
 SELECT code FROM users WHERE email = ?
 `
@@ -132,6 +121,17 @@ func (q *Queries) GetUserCode(ctx context.Context, email string) (string, error)
 	var code string
 	err := row.Scan(&code)
 	return code, err
+}
+
+const getUserFromCode = `-- name: GetUserFromCode :one
+SELECT email, code, name FROM users WHERE code = ?
+`
+
+func (q *Queries) GetUserFromCode(ctx context.Context, code string) (User, error) {
+	row := q.queryRow(ctx, q.getUserFromCodeStmt, getUserFromCode, code)
+	var i User
+	err := row.Scan(&i.Email, &i.Code, &i.Name)
+	return i, err
 }
 
 const listEventAttendees = `-- name: ListEventAttendees :many

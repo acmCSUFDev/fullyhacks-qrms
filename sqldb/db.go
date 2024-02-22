@@ -42,11 +42,11 @@ func Prepare(ctx context.Context, db DBTX) (*Queries, error) {
 	if q.getEventStmt, err = db.PrepareContext(ctx, getEvent); err != nil {
 		return nil, fmt.Errorf("error preparing query GetEvent: %w", err)
 	}
-	if q.getUserStmt, err = db.PrepareContext(ctx, getUser); err != nil {
-		return nil, fmt.Errorf("error preparing query GetUser: %w", err)
-	}
 	if q.getUserCodeStmt, err = db.PrepareContext(ctx, getUserCode); err != nil {
 		return nil, fmt.Errorf("error preparing query GetUserCode: %w", err)
+	}
+	if q.getUserFromCodeStmt, err = db.PrepareContext(ctx, getUserFromCode); err != nil {
+		return nil, fmt.Errorf("error preparing query GetUserFromCode: %w", err)
 	}
 	if q.listEventAttendeesStmt, err = db.PrepareContext(ctx, listEventAttendees); err != nil {
 		return nil, fmt.Errorf("error preparing query ListEventAttendees: %w", err)
@@ -95,14 +95,14 @@ func (q *Queries) Close() error {
 			err = fmt.Errorf("error closing getEventStmt: %w", cerr)
 		}
 	}
-	if q.getUserStmt != nil {
-		if cerr := q.getUserStmt.Close(); cerr != nil {
-			err = fmt.Errorf("error closing getUserStmt: %w", cerr)
-		}
-	}
 	if q.getUserCodeStmt != nil {
 		if cerr := q.getUserCodeStmt.Close(); cerr != nil {
 			err = fmt.Errorf("error closing getUserCodeStmt: %w", cerr)
+		}
+	}
+	if q.getUserFromCodeStmt != nil {
+		if cerr := q.getUserFromCodeStmt.Close(); cerr != nil {
+			err = fmt.Errorf("error closing getUserFromCodeStmt: %w", cerr)
 		}
 	}
 	if q.listEventAttendeesStmt != nil {
@@ -170,8 +170,8 @@ type Queries struct {
 	checkAuthTokenStmt     *sql.Stmt
 	createEventStmt        *sql.Stmt
 	getEventStmt           *sql.Stmt
-	getUserStmt            *sql.Stmt
 	getUserCodeStmt        *sql.Stmt
+	getUserFromCodeStmt    *sql.Stmt
 	listEventAttendeesStmt *sql.Stmt
 	listEventsStmt         *sql.Stmt
 	listUsersStmt          *sql.Stmt
@@ -188,8 +188,8 @@ func (q *Queries) WithTx(tx *sql.Tx) *Queries {
 		checkAuthTokenStmt:     q.checkAuthTokenStmt,
 		createEventStmt:        q.createEventStmt,
 		getEventStmt:           q.getEventStmt,
-		getUserStmt:            q.getUserStmt,
 		getUserCodeStmt:        q.getUserCodeStmt,
+		getUserFromCodeStmt:    q.getUserFromCodeStmt,
 		listEventAttendeesStmt: q.listEventAttendeesStmt,
 		listEventsStmt:         q.listEventsStmt,
 		listUsersStmt:          q.listUsersStmt,

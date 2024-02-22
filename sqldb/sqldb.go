@@ -6,6 +6,7 @@ import (
 	"crypto/sha256"
 	"database/sql"
 	"encoding/base64"
+	"errors"
 	"fmt"
 
 	_ "embed"
@@ -13,7 +14,7 @@ import (
 	"github.com/google/uuid"
 	"libdb.so/lazymigrate"
 
-	_ "modernc.org/sqlite"
+	"modernc.org/sqlite"
 )
 
 //go:generate sqlc generate
@@ -106,4 +107,42 @@ func NewUser(name, email string) User {
 		Code:  code,
 		Name:  name,
 	}
+}
+
+const (
+	sqliteConstraintForeignKey = 787
+	sqliteConstraintPrimaryKey = 1555
+	sqliteConstraintUnique     = 2067
+)
+
+func sqliteErrIsCode(err error, codes ...int) bool {
+	var sqliteErr *sqlite.Error
+	if !errors.As(err, &sqliteErr) {
+		return false
+	}
+	for _, code := range codes {
+		if sqliteErr.Code() == code {
+			return true
+		}
+	}
+	return false
+}
+
+// IsForeignKeyConstraintError returns true if the error is a foreign key
+// constraint error.
+func IsForeignKeyConstraintError(err error) bool {
+	return sqliteErrIsCode(err, sqliteConstraintForeignKey)
+}
+
+// IsUniqueConstraintError returns true if the error is a constraint error.
+// This also includes primary key errors.
+func IsUniqueConstraintError(err error) bool {
+	return sqliteErrIsCode(err,
+		sqliteConstraintPrimaryKey,
+		sqliteConstraintUnique)
+}
+
+// IsNotFound returns true if the error is a not found error.
+func IsNotFound(err error) bool {
+	return errors.Is(err, sql.ErrNoRows)
 }

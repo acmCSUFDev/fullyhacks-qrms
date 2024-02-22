@@ -4,11 +4,11 @@ SELECT * FROM users;
 -- name: AddUser :exec
 INSERT INTO users (code, name, email) VALUES (?, ?, ?);
 
--- name: GetUser :one
-SELECT name FROM users WHERE email = ?;
-
 -- name: GetUserCode :one
 SELECT code FROM users WHERE email = ?;
+
+-- name: GetUserFromCode :one
+SELECT * FROM users WHERE code = ?;
 
 -- name: ListEvents :many
 SELECT

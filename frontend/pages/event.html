@@ -61,7 +61,16 @@
   }
 
   #qr-status.error {
+    color: var(--pico-color-red);
+  }
+  #qr-status.error::before {
+    content: "Error: ";
+    font-weight: bold;
+  }
+
+  #qr-status.scanned-user {
     color: var(--pico-primary);
+    font-weight: bold;
   }
 
   .qr-scanner .scan-region-highlight-svg {
@@ -81,56 +90,57 @@
     status: document.getElementById("qr-status"),
   };
 
-  let statusTimeout;
-  function setStatus(status, error = false) {
-    if (statusTimeout) {
-      clearTimeout(statusTimeout);
-      statusTimeout = null;
-    }
-
-    if (error) {
-      e.status.classList.add("error");
-    } else {
-      e.status.classList.remove("error");
-    }
-
-    if (!status) {
-      e.status.textContent = "Scanning...";
-      return;
-    }
-
-    e.status.textContent = status;
-    console.log("QR scanning status:", status);
-    statusTimeout = setTimeout(() => setStatus(), 2000);
+  function setStatus(status, className = "") {
+    e.status.className = className;
+    e.status.textContent = status || "Scanning...";
   }
 
+  async function sleep(ms) {
+    return new Promise((resolve) => setTimeout(resolve, ms));
+  }
+
+  let scanning = false;
+  const scanDelay = 3000;
+
   async function onQRScanned(result) {
-    try {
-      setStatus("Scanned QR code, processing...");
-
-      const r = await fetch("/events/{{ .UUID }}/attendees", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ user_code: result }),
-      });
-
-      if (!r.ok) {
-        if (r.headers.get("Content-Type") === "application/json") {
-          const body = await r.json();
-          if (body.error) {
-            throw new Error(body.error);
-          }
-        }
-        throw new Error("Failed to process QR code.");
-      }
-
-      setStatus("Scanned QR code, processed!");
-    } catch(err) {
-      setStatus(`Error: ${err.message}`, true);
+    if (scanning) {
       return;
     }
+
+    scanning = true;
+
+    setStatus("Scanned QR code, processing...");
+
+    try {
+      const user = await addAttendeeQR(result.data);
+      setStatus(user.name, "scanned-user");
+    } catch(err) {
+      setStatus(`${err.message}`, "error");
+    } finally {
+      await sleep(scanDelay);
+      scanning = false;
+      setStatus();
+    }
+  }
+
+  async function addAttendeeQR(userCode) {
+    const r = await fetch("/events/{{ .UUID }}/attendees", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ user_code: userCode }),
+    });
+
+    if (!r.ok) {
+      if (r.headers.get("Content-Type") === "application/json") {
+        const body = await r.json();
+        if (body.error) {
+          throw new Error(body.error);
+        }
+      }
+      throw new Error("Failed to process QR code.");
+    }
+
+    return await r.json();
   }
 
   try {

@@ -83,15 +83,45 @@ type addEventAttendeeRequest struct {
 	UserCode string `json:"user_code"`
 }
 
-func (h *Handler) addEventAttendee(ctx context.Context, r addEventAttendeeRequest) (hrt.None, error) {
+type addEventAttendeeResponse struct {
+	Name  string `json:"name"`
+	Email string `json:"email"`
+}
+
+func (h *Handler) addEventAttendee(ctx context.Context, r addEventAttendeeRequest) (addEventAttendeeResponse, error) {
 	eventUUID := hrt.RequestFromContext(ctx).PathValue("id")
+
+	var resp addEventAttendeeResponse
+
+	u, err := h.db.GetUserFromCode(ctx, r.UserCode)
+	if err != nil {
+		if sqldb.IsNotFound(err) {
+			return resp, hrt.NewHTTPError(400, "user not found")
+		}
+		return resp, fmt.Errorf("cannot get user: %w", err)
+	}
+
 	if err := h.db.AddAttendee(ctx, sqldb.AddAttendeeParams{
 		EventUUID: eventUUID,
 		UserCode:  r.UserCode,
 	}); err != nil {
-		return hrt.Empty, fmt.Errorf("cannot add attendee: %w", err)
+		if sqldb.IsUniqueConstraintError(err) {
+			return resp, hrt.NewHTTPError(400, "user already attends event")
+		}
+		return resp, fmt.Errorf("cannot add attendee: %w", err)
 	}
-	return hrt.Empty, nil
+
+	h.logger.Info(
+		"Added attendee",
+		"event", eventUUID,
+		"user_code", r.UserCode,
+		"user_name", u.Name,
+		"user_email", u.Email)
+
+	return addEventAttendeeResponse{
+		Name:  u.Name,
+		Email: u.Email,
+	}, nil
 }
 
 func (h *Handler) getMergeEvent(w http.ResponseWriter, r *http.Request) {
