@@ -6,6 +6,7 @@ import (
 	"html/template"
 	"io/fs"
 	"net/http"
+	"reflect"
 	"strings"
 	"time"
 
@@ -31,8 +32,9 @@ func NewTemplater() *tmplutil.Templater {
 				part, _, _ := strings.Cut(uuid, "-")
 				return part
 			},
-			"plural": func(n int, singular, plural string) string {
-				if n == 1 {
+			"plural": func(n any, singular, plural string) string {
+				nInt := reflect.ValueOf(n).Int()
+				if nInt == 1 {
 					return fmt.Sprintf("%d %s", n, singular)
 				}
 				return fmt.Sprintf("%d %s", n, plural)
