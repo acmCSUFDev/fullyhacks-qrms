@@ -1,6 +1,6 @@
-# QR Management System for Fullyhacks
+# QR Management System for FullyHacks
 
-This is the QR Management System for Fullyhacks. It is a service used to render
+This is the QR Management System for FullyHacks. It is a service used to render
 QR codes for checking in and out of events, ensuring that each user is only
 checked in once. It also helps to keep track of the number of people who have
 checked in and out of the event.
