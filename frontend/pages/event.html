@@ -25,7 +25,7 @@
       </aside>
     </header>
 
-    <h4>Scan QR Code</h4>
+    <h4 id="qr-title">Scan QR Code</h4>
 
     <noscript>
       <p>JavaScript is required to use the QR scanner.</p>
@@ -49,9 +49,15 @@
   }
 
   #qr-video {
-    width: 100%;
+    width: auto;
     height: auto;
-    max-height: 90vh;
+    max-width: 100%;
+    max-height: calc(100vh - 5em);
+
+    margin: 0 auto;
+    display: block;
+
+    scroll-margin-top: 1em;
   }
 
   #qr-status {
@@ -63,6 +69,7 @@
   #qr-status.error {
     color: var(--pico-color-red);
   }
+
   #qr-status.error::before {
     content: "Error: ";
     font-weight: bold;
@@ -71,6 +78,10 @@
   #qr-status.scanned-user {
     color: var(--pico-primary);
     font-weight: bold;
+  }
+
+  .qr-scanner h4 {
+    margin: var(--pico-typography-spacing-vertical) 0;
   }
 
   .qr-scanner .scan-region-highlight-svg {
@@ -154,11 +165,17 @@
       highlightCodeOutline: true,
     });
 
-    scanner.start();
+    await scanner.start();
     e.status.textContent = "Scanning...";
   } catch (err) {
     alert("Error initializing QR scanner!");
     e.status.textContent = `Error: ${err.message}`;
     e.status.classList.add("error");
+  }
+
+  // Scroll to the video element only after the QR scanner has been loaded.
+  if (location.hash == "#qr-video") {
+    const anchor = document.getElementById("qr-video");
+    anchor.scrollIntoView({ behavior: "smooth" });
   }
 </script>

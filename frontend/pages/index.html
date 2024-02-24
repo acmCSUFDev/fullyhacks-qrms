@@ -20,7 +20,7 @@
     <ul class="events-list list-box button-list">
       {{ range .Events }}
         <li>
-          <a href="/events/{{ .UUID }}" role="button">
+          <a href="/events/{{ .UUID }}#qr-video" role="button">
             <hgroup>
               <h3><code>{{ .UUID }}</code></h3>
               <p class="description">{{ .Description }}</p>
