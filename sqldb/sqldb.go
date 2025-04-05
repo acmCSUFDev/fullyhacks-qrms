@@ -100,7 +100,7 @@ func NewUser(name, email string) User {
 
 	userHash := sha256.Sum256([]byte(email))
 	userBits := base64.RawURLEncoding.EncodeToString(userHash[:])[:6]
-	code := "fullyhacks:" + randBits + userBits
+	code := "fullyhacks@" + randBits + userBits
 
 	return User{
 		Email: email,
