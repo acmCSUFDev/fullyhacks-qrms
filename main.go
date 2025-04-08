@@ -99,17 +99,18 @@ func importUsers(ctx context.Context, logger *slog.Logger) error {
 	defer f.Close()
 
 	csvReader := csv.NewReader(f)
+	csvReader.TrimLeadingSpace = true
 
 	header, err := csvReader.Read()
 	if err != nil {
 		return fmt.Errorf("failed to read header: %w", err)
 	}
 
-	expectedHeader := []string{"Name", "School", "Email", "Food", "Major"}
+	expectedHeader := []string{"Name", "School", "Email"}
 	type Record struct {
-		Name  string
-		X1    string
-		Email string
+		Name   string
+		School string
+		Email  string
 	}
 
 	if !slices.Equal(header, expectedHeader) {
