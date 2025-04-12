@@ -24,7 +24,6 @@ func (h *Handler) useAuth(next http.Handler) http.Handler {
 		if err == nil {
 			t, err := h.db.CheckAuthToken(r.Context(), cookie.Value)
 			if err != nil {
-				h.renderErrorWithCode(w, 404, fmt.Errorf("token not found"))
 				return
 			}
 
@@ -65,6 +64,13 @@ const dayDuration = 24 * time.Hour
 var errTokenNotFound = fmt.Errorf("token not found")
 
 func (h *Handler) getAuth(w http.ResponseWriter, r *http.Request) {
+	oldAuth, ok := ctxt.From[authorization](r.Context())
+	if ok && oldAuth.CreatedAt.Add(5*dayDuration).After(time.Now()) {
+		// Already authenticated with a sufficiently recent token.
+		http.Redirect(w, r, "/", http.StatusSeeOther)
+		return
+	}
+
 	parentToken := r.PathValue("token")
 	newToken := generateNewToken()
 

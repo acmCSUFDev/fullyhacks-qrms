@@ -62,7 +62,11 @@ func NewHandler(args Args) *Handler {
 		// 	ServerErrorLevel: slog.LevelWarn,
 		// }))
 
-		m.Get("/auth/{token}", h.getAuth)
+		m.Group(func(m chi.Router) {
+			m.Use(h.useAuth)
+
+			m.Get("/auth/{token}", h.getAuth)
+		})
 
 		m.Group(func(m chi.Router) {
 			m.Use(h.useAuth)
